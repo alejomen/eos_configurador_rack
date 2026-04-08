@@ -262,11 +262,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <section className="space-y-3">
       <div className="flex justify-between items-center">
         <span className="uppercase font-bold text-gray-400 tracking-widest text-[7px] md:text-[10px]">Luminarias</span>
-        {activeLampType && <button onClick={() => setActiveLampType(null)} className="text-red-500 font-bold uppercase text-[7px] md:text-[9px] animate-pulse">● Soltar</button>}
       </div>
       <div className="grid grid-cols-2 gap-3">
         {[LampType.SPOT_DIRECTIONAL, LampType.FIXED_RACK].map(type => (
-          <button key={type} onClick={() => setActiveLampType(type)} className={`flex flex-col p-3 border rounded-2xl transition-all ${activeLampType === type ? 'border-black bg-gray-50 ring-1 ring-black shadow-lg' : 'border-gray-100 hover:border-gray-300'}`}>
+          <button key={type} onClick={() => setActiveLampType(activeLampType === type ? null : type)} className={`flex flex-col p-3 border rounded-2xl transition-all ${activeLampType === type ? 'border-black bg-gray-50 ring-1 ring-black shadow-lg' : 'border-gray-100 hover:border-gray-300'}`}>
             <div className="flex justify-between items-center mb-2 w-full">
               <div className={`w-6 h-6 rounded-full ${activeLampType === type ? 'bg-[#22c55e]' : 'bg-black'}`} />
               <div onClick={(e) => { e.stopPropagation(); onProductDetail(type); }} className="w-5 h-5 flex items-center justify-center text-[7px] md:text-[10px] bg-gray-100 rounded-full hover:bg-black hover:text-white border border-transparent">i</div>

@@ -21,17 +21,19 @@ interface Scene3DProps {
   onDeleteObject: (id: string) => void;
   onDeleteSystem: (id: string) => void;
   onSelectObject: (id: string | null) => void;
+  onSelectSystem: (id: string | null) => void;
   deleteMode: boolean;
   isExportingImage: boolean;
 }
 
 export const Scene3D: React.FC<Scene3DProps> = ({ 
   config, activeLampType, onPlaceLamp, onRemoveLamp, onUpdateLampPos, canvasRef, sceneGroupRef,
-  onUpdateSystemPos, onUpdateObjectPos, onCloneObject, onDeleteObject, onDeleteSystem, onSelectObject, deleteMode, isExportingImage
+  onUpdateSystemPos, onUpdateObjectPos, onCloneObject, onDeleteObject, onDeleteSystem, onSelectObject, onSelectSystem, deleteMode, isExportingImage
 }) => {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [draggingLampId, setDraggingLampId] = useState<string | null>(null);
   const [dragType, setDragType] = useState<'system' | 'object' | null>(null);
+  const [dragData, setDragData] = useState<{ planeY: number, startPoint: THREE.Vector3, startObjPos: [number, number, number] } | null>(null);
 
   const onPointerDown = (e: ThreeEvent<PointerEvent>, id: string, type: 'system' | 'object') => {
     e.stopPropagation();
@@ -48,9 +50,29 @@ export const Scene3D: React.FC<Scene3DProps> = ({
 
     if (type === 'object') {
       onSelectObject(id);
+      onSelectSystem(null);
     } else {
       onSelectObject(null);
+      onSelectSystem(id);
     }
+
+    // Obtener la posición actual del objeto
+    let objPos: [number, number, number] = [0, 0, 0];
+    if (type === 'system') {
+      const sys = config.systems.find(s => s.id === id);
+      if (sys) objPos = sys.position;
+    } else {
+      const obj = config.envObjects.find(o => o.id === id);
+      if (obj) objPos = obj.position;
+    }
+    
+    // Guardar los datos exactos del clic para un arrastre perfecto desde cualquier ángulo
+    setDragData({
+      planeY: e.point.y,
+      startPoint: e.point.clone(),
+      startObjPos: objPos
+    });
+
     setDraggingId(id);
     setDragType(type);
   };
@@ -59,19 +81,7 @@ export const Scene3D: React.FC<Scene3DProps> = ({
     setDraggingId(null);
     setDraggingLampId(null);
     setDragType(null);
-  };
-
-  const onPointerMove = (e: ThreeEvent<PointerEvent>) => {
-    if (!draggingId || !dragType) return;
-    
-    // Proyectar el movimiento sobre el plano XZ (suelo)
-    const movePos: [number, number, number] = [e.point.x, 0, e.point.z];
-    
-    if (dragType === 'system') {
-      onUpdateSystemPos(draggingId, movePos);
-    } else {
-      onUpdateObjectPos(draggingId, movePos);
-    }
+    setDragData(null);
   };
 
   return (
@@ -80,7 +90,10 @@ export const Scene3D: React.FC<Scene3DProps> = ({
       className="w-full h-full bg-[#fdfdfd]" 
       ref={canvasRef}
       gl={{ preserveDrawingBuffer: true, antialias: true }}
-      onPointerMissed={() => onSelectObject(null)}
+      onPointerMissed={() => {
+        onSelectObject(null);
+        onSelectSystem(null);
+      }}
     >
       <PerspectiveCamera makeDefault position={[8, 5, 8]} fov={35} />
       <color attach="background" args={['#ffffff']} />
@@ -110,16 +123,37 @@ export const Scene3D: React.FC<Scene3DProps> = ({
           />
         </mesh>
 
-        {/* Plano invisible para capturar el arrastre */}
-        <mesh 
-          rotation={[-Math.PI / 2, 0, 0]} 
-          position={[0, -0.01, 0]} 
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-          visible={false}
-        >
-          <planeGeometry args={[200, 200]} />
-        </mesh>
+        {/* Plano invisible para capturar el arrastre - Activo solo al arrastrar, a la altura exacta del clic, doble cara */}
+        {draggingId && dragData && (
+          <mesh 
+            rotation={[-Math.PI / 2, 0, 0]} 
+            position={[0, dragData.planeY, 0]} 
+            onPointerMove={(e) => {
+              e.stopPropagation();
+              const deltaX = e.point.x - dragData.startPoint.x;
+              const deltaZ = e.point.z - dragData.startPoint.z;
+              
+              const movePos: [number, number, number] = [
+                dragData.startObjPos[0] + deltaX, 
+                0, 
+                dragData.startObjPos[2] + deltaZ
+              ];
+              
+              if (dragType === 'system') {
+                onUpdateSystemPos(draggingId, movePos);
+              } else {
+                onUpdateObjectPos(draggingId, movePos);
+              }
+            }}
+            onPointerUp={(e) => {
+              e.stopPropagation();
+              onPointerUp();
+            }}
+          >
+            <planeGeometry args={[1000, 1000]} />
+            <meshBasicMaterial transparent opacity={0} depthWrite={false} side={THREE.DoubleSide} />
+          </mesh>
+        )}
 
         <group visible={!isExportingImage}>
           <Grid 

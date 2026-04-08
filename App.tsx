@@ -438,6 +438,7 @@ const App: React.FC = () => {
           onDeleteObject={deleteObject}
           onDeleteSystem={deleteSystem}
           onSelectObject={(id) => setConfig(prev => ({ ...prev, selectedObjectId: id }))}
+          onSelectSystem={(id) => setConfig(prev => ({ ...prev, selectedSystemId: id }))}
           deleteMode={deleteMode}
           isExportingImage={isExportingImage}
         />
