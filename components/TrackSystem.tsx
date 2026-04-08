@@ -73,7 +73,7 @@ export const TrackSystem: React.FC<TrackSystemProps> = ({
           castShadow
         >
           <boxGeometry args={[length, railThickness, railThickness]} />
-          <meshStandardMaterial color={isSelected ? "#000" : "#111"} roughness={0.9} />
+          <meshStandardMaterial color={deleteMode ? "#ef4444" : (isSelected ? "#000" : "#111")} roughness={0.9} />
         </mesh>
 
         {draggingLamp && draggingLamp.index === index && (

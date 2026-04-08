@@ -19,13 +19,15 @@ interface Scene3DProps {
   onUpdateObjectPos: (id: string, pos: [number, number, number]) => void;
   onCloneObject: (id: string) => void;
   onDeleteObject: (id: string) => void;
+  onDeleteSystem: (id: string) => void;
   onSelectObject: (id: string | null) => void;
   deleteMode: boolean;
+  isExportingImage: boolean;
 }
 
 export const Scene3D: React.FC<Scene3DProps> = ({ 
   config, activeLampType, onPlaceLamp, onRemoveLamp, onUpdateLampPos, canvasRef, sceneGroupRef,
-  onUpdateSystemPos, onUpdateObjectPos, onCloneObject, onDeleteObject, onSelectObject, deleteMode
+  onUpdateSystemPos, onUpdateObjectPos, onCloneObject, onDeleteObject, onDeleteSystem, onSelectObject, deleteMode, isExportingImage
 }) => {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [draggingLampId, setDraggingLampId] = useState<string | null>(null);
@@ -33,12 +35,13 @@ export const Scene3D: React.FC<Scene3DProps> = ({
 
   const onPointerDown = (e: ThreeEvent<PointerEvent>, id: string, type: 'system' | 'object') => {
     e.stopPropagation();
+    if (deleteMode) {
+      if (type === 'object') onDeleteObject(id);
+      if (type === 'system') onDeleteSystem(id);
+      return;
+    }
     if (type === 'object') {
       onSelectObject(id);
-      if (deleteMode) {
-        onDeleteObject(id);
-        return;
-      }
     } else {
       onSelectObject(null);
     }
@@ -74,6 +77,7 @@ export const Scene3D: React.FC<Scene3DProps> = ({
       onPointerMissed={() => onSelectObject(null)}
     >
       <PerspectiveCamera makeDefault position={[8, 5, 8]} fov={35} />
+      <color attach="background" args={['#ffffff']} />
       <OrbitControls 
         target={[0, 1.5, 0]}
         minPolarAngle={0} 
@@ -90,7 +94,7 @@ export const Scene3D: React.FC<Scene3DProps> = ({
         <Environment preset="apartment" />
         
         {/* TECHO: Invisible desde arriba usando THREE.FrontSide y rotación estratégica */}
-        <mesh position={[0, config.ceilingHeight, 0]} rotation={[Math.PI / 2, 0, 0]} receiveShadow>
+        <mesh visible={!isExportingImage} position={[0, config.ceilingHeight, 0]} rotation={[Math.PI / 2, 0, 0]} receiveShadow>
           <planeGeometry args={[100, 100]} />
           <meshStandardMaterial 
             color="#ffffff" 
@@ -111,20 +115,22 @@ export const Scene3D: React.FC<Scene3DProps> = ({
           <planeGeometry args={[200, 200]} />
         </mesh>
 
-        <Grid 
-          infiniteGrid 
-          fadeDistance={40} 
-          fadeStrength={10} 
-          sectionSize={2} 
-          sectionColor="#cfd8dc" 
-          sectionThickness={1.2}
-          cellSize={0.5} 
-          cellColor="#eceff1"
-          cellThickness={0.8}
-          position={[0, -0.001, 0]}
-        />
+        <group visible={!isExportingImage}>
+          <Grid 
+            infiniteGrid 
+            fadeDistance={40} 
+            fadeStrength={10} 
+            sectionSize={2} 
+            sectionColor="#cfd8dc" 
+            sectionThickness={1.2}
+            cellSize={0.5} 
+            cellColor="#eceff1"
+            cellThickness={0.8}
+            position={[0, -0.001, 0]}
+          />
+        </group>
 
-        {config.showEnvironment && (
+        {config.showEnvironment && !isExportingImage && (
           <EnvironmentContext 
             config={config} 
             onPointerDown={(e, id) => onPointerDown(e, id, 'object')}
@@ -161,7 +167,9 @@ export const Scene3D: React.FC<Scene3DProps> = ({
           ))}
         </group>
 
-        <ContactShadows position={[0, 0, 0]} opacity={0.25} scale={40} blur={2.5} far={8} />
+        <group visible={!isExportingImage}>
+          <ContactShadows position={[0, 0, 0]} opacity={0.25} scale={40} blur={2.5} far={8} />
+        </group>
       </Suspense>
     </Canvas>
   );

@@ -48,6 +48,7 @@ const App: React.FC = () => {
 
   const [history, setHistory] = useState<ConfigState[]>([]);
   const [deleteMode, setDeleteMode] = useState(false);
+  const [isExportingImage, setIsExportingImage] = useState(false);
   const [activeLampType, setActiveLampType] = useState<LampType | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<LampType | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -158,6 +159,15 @@ const App: React.FC = () => {
     }));
   };
 
+  const deleteSystem = (id: string) => {
+    saveHistory(config);
+    setConfig(prev => ({
+      ...prev,
+      systems: prev.systems.filter(s => s.id !== id),
+      selectedSystemId: prev.selectedSystemId === id ? (prev.systems.find(s => s.id !== id)?.id || null) : prev.selectedSystemId
+    }));
+  };
+
   const rotateObject = (id: string) => {
     saveHistory(config);
     setConfig(prev => ({
@@ -201,67 +211,102 @@ const App: React.FC = () => {
 
   const handleDownloadPDF = () => {
     const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
+    if (!printWindow) {
+      alert("Por favor, permite las ventanas emergentes para generar el PDF.");
+      return;
+    }
 
-    const date = new Date().toLocaleDateString();
-    
-    let itemsHtml = `
-      <tr><td>Kit Riel Magnético (2m)</td><td>${quoteData.railSegments}</td><td>$${PRICING.RAIL_KIT_2M}</td><td>$${quoteData.railCost}</td></tr>
-      ${quoteData.cornerCount > 0 ? `<tr><td>Uniones de Esquina</td><td>${quoteData.cornerCount}</td><td>$${PRICING.CORNER_PIECE}</td><td>$${quoteData.cornersCost}</td></tr>` : ''}
-      ${quoteData.spotCount > 0 ? `<tr><td>Spot Bala 12W</td><td>${quoteData.spotCount}</td><td>$${PRICING.SPOT_DIRECTIONAL}</td><td>$${quoteData.spotsCost}</td></tr>` : ''}
-      ${quoteData.rackCount > 0 ? `<tr><td>Rack Lineal 8 Luces</td><td>${quoteData.rackCount}</td><td>$${PRICING.FIXED_RACK}</td><td>$${quoteData.racksCost}</td></tr>` : ''}
-    `;
+    // Show loading state in the new window
+    printWindow.document.write('<html><head><title>Generando PDF...</title></head><body style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;color:#666;"><h2>Preparando documento...</h2></body></html>');
 
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Cotización EOS Iluminación</title>
-          <style>
-            body { font-family: 'Inter', sans-serif; padding: 40px; color: #333; }
-            .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 20px; }
-            .logo { height: 60px; }
-            .title { text-align: right; }
-            table { width: 100%; border-collapse: collapse; margin-top: 30px; }
-            th { text-align: left; border-bottom: 1px solid #eee; padding: 10px; font-size: 12px; text-transform: uppercase; color: #888; }
-            td { padding: 15px 10px; border-bottom: 1px solid #eee; font-size: 14px; }
-            .total-section { margin-top: 40px; text-align: right; }
-            .total-row { display: flex; justify-content: flex-end; gap: 40px; margin-bottom: 10px; }
-            .total-label { font-weight: bold; text-transform: uppercase; font-size: 12px; }
-            .grand-total { font-size: 24px; font-weight: bold; margin-top: 10px; border-top: 2px solid #000; padding-top: 10px; }
-            .footer { margin-top: 60px; font-size: 10px; color: #999; text-align: center; }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <img src="${LOGO_URL}" class="logo" />
-            <div class="title">
-              <h1 style="margin:0; font-weight:300;">COTIZACIÓN FORMAL</h1>
-              <p style="margin:5px 0 0 0; color:#888;">Fecha: ${date}</p>
+    // Hide environment for screenshot
+    setIsExportingImage(true);
+
+    // Wait for React to re-render and Three.js to draw the frame
+    setTimeout(() => {
+      const canvas = canvasRef.current;
+      const imageUrl = canvas ? canvas.toDataURL('image/jpeg', 0.9) : '';
+      
+      // Restore environment
+      setIsExportingImage(false);
+
+      const date = new Date().toLocaleDateString();
+      
+      let itemsHtml = `
+        <tr><td>Kit Riel Magnético (2m)</td><td>${quoteData.railSegments}</td><td>$${PRICING.RAIL_KIT_2M}</td><td>$${quoteData.railCost}</td></tr>
+        ${quoteData.cornerCount > 0 ? `<tr><td>Uniones de Esquina</td><td>${quoteData.cornerCount}</td><td>$${PRICING.CORNER_PIECE}</td><td>$${quoteData.cornersCost}</td></tr>` : ''}
+        ${quoteData.spotCount > 0 ? `<tr><td>Spot Bala 12W</td><td>${quoteData.spotCount}</td><td>$${PRICING.SPOT_DIRECTIONAL}</td><td>$${quoteData.spotsCost}</td></tr>` : ''}
+        ${quoteData.rackCount > 0 ? `<tr><td>Rack Lineal 8 Luces</td><td>${quoteData.rackCount}</td><td>$${PRICING.FIXED_RACK}</td><td>$${quoteData.racksCost}</td></tr>` : ''}
+      `;
+
+      printWindow.document.open();
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Cotización EOS Iluminación</title>
+            <style>
+              body { font-family: 'Inter', sans-serif; padding: 40px; color: #333; }
+              .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 20px; }
+              .logo { height: 60px; }
+              .title { text-align: right; }
+              .preview-image { width: 100%; height: 250px; display: flex; justify-content: center; align-items: center; margin: 20px 0; }
+              .preview-image img { width: 100%; height: 100%; object-fit: contain; }
+              table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+              th { text-align: left; border-bottom: 1px solid #eee; padding: 10px; font-size: 12px; text-transform: uppercase; color: #888; }
+              td { padding: 15px 10px; border-bottom: 1px solid #eee; font-size: 14px; }
+              .total-section { margin-top: 40px; text-align: right; }
+              .total-row { display: flex; justify-content: flex-end; gap: 40px; margin-bottom: 10px; }
+              .total-label { font-weight: bold; text-transform: uppercase; font-size: 12px; }
+              .grand-total { font-size: 24px; font-weight: bold; margin-top: 10px; border-top: 2px solid #000; padding-top: 10px; }
+              .footer { margin-top: 60px; font-size: 10px; color: #999; text-align: center; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <img src="${LOGO_URL}" class="logo" />
+              <div class="title">
+                <h1 style="margin:0; font-weight:300;">COTIZACIÓN FORMAL</h1>
+                <p style="margin:5px 0 0 0; color:#888;">Fecha: ${date}</p>
+              </div>
             </div>
-          </div>
-          <table>
-            <thead>
-              <tr><th>Descripción del Componente</th><th>Cant.</th><th>P. Unitario</th><th>Subtotal</th></tr>
-            </thead>
-            <tbody>
-              ${itemsHtml}
-            </tbody>
-          </table>
-          <div class="total-section">
-            <div class="total-row"><span class="total-label">Subtotal Productos</span><span>$${quoteData.subtotal}</span></div>
-            ${config.includeInstallation ? `<div class="total-row"><span class="total-label">Servicio de Instalación</span><span>$${quoteData.installationCost}</span></div>` : ''}
-            ${config.includeShipping ? `<div class="total-row"><span class="total-label">Logística y Transporte</span><span>$${quoteData.shippingCost}</span></div>` : ''}
-            <div class="grand-total"><span class="total-label" style="margin-right:20px">Total Neto USD</span> $${quoteData.total.toLocaleString()}</div>
-          </div>
-          <div class="footer">
-            <p>EOS Iluminación Profesional - Sistemas Magnéticos 48V de Alta Gama</p>
-            <p>Válido por 15 días a partir de la fecha de emisión.</p>
-          </div>
-          <script>window.onload = () => { window.print(); window.close(); }</script>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
+            
+            ${imageUrl ? `
+            <div class="preview-image">
+              <img src="${imageUrl}" alt="Vista del Sistema de Iluminación" />
+            </div>
+            ` : ''}
+
+            <table>
+              <thead>
+                <tr><th>Descripción del Componente</th><th>Cant.</th><th>P. Unitario</th><th>Subtotal</th></tr>
+              </thead>
+              <tbody>
+                ${itemsHtml}
+              </tbody>
+            </table>
+            <div class="total-section">
+              <div class="total-row"><span class="total-label">Subtotal Productos</span><span>$${quoteData.subtotal}</span></div>
+              ${config.includeInstallation ? `<div class="total-row"><span class="total-label">Servicio de Instalación</span><span>$${quoteData.installationCost}</span></div>` : ''}
+              ${config.includeShipping ? `<div class="total-row"><span class="total-label">Logística y Transporte</span><span>$${quoteData.shippingCost}</span></div>` : ''}
+              <div class="grand-total"><span class="total-label" style="margin-right:20px">Total Neto USD</span> $${quoteData.total.toLocaleString()}</div>
+            </div>
+            <div class="footer">
+              <p>EOS Iluminación Profesional - Sistemas Magnéticos 48V de Alta Gama</p>
+              <p>Válido por 15 días a partir de la fecha de emisión.</p>
+            </div>
+            <script>
+              window.onload = () => { 
+                setTimeout(() => {
+                  window.print(); 
+                  window.close(); 
+                }, 500);
+              }
+            </script>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+    }, 150);
   };
 
   const handleExport3D = async () => {
@@ -277,9 +322,92 @@ const App: React.FC = () => {
     link.click();
   };
 
+  const handleExpressLighting = useCallback((count: number) => {
+    if (!activeLampType || !config.selectedSystemId) return;
+
+    saveHistory(config);
+    setConfig(prev => {
+      const systemIndex = prev.systems.findIndex(s => s.id === prev.selectedSystemId);
+      if (systemIndex === -1) return prev;
+
+      const system = prev.systems[systemIndex];
+      
+      let segments: { index: number, length: number }[] = [];
+      if (system.layout === LayoutType.LINEAR) {
+        segments = [{ index: 0, length: system.width }];
+      } else if (system.layout === LayoutType.RECTANGULAR) {
+        segments = [
+          { index: 0, length: system.width },
+          { index: 1, length: system.depth },
+          { index: 2, length: system.width },
+          { index: 3, length: system.depth }
+        ];
+      } else if (system.layout === LayoutType.L_SHAPE) {
+        segments = [
+          { index: 0, length: system.width },
+          { index: 1, length: system.depth }
+        ];
+      } else if (system.layout === LayoutType.U_SHAPE) {
+        segments = [
+          { index: 0, length: system.width },
+          { index: 1, length: system.depth },
+          { index: 2, length: system.width }
+        ];
+      }
+
+      const totalLength = segments.reduce((sum, seg) => sum + seg.length, 0);
+      const segmentLength = totalLength / count;
+      
+      const newLamps: PlacedLamp[] = [];
+      
+      for (let i = 0; i < count; i++) {
+        const basePos = segmentLength * (i + 0.5);
+        // Up to 40% variation in distance means +/- 20% of segment length variation
+        const variation = (Math.random() - 0.5) * 2 * (segmentLength * 0.2);
+        let pos = basePos + variation;
+        
+        // Clamp to avoid edges (leave at least 0.1m at the ends)
+        pos = Math.max(0.1, Math.min(totalLength - 0.1, pos));
+
+        let accumulated = 0;
+        let targetSegment = segments[0];
+        let localPos = pos;
+
+        for (const seg of segments) {
+          if (pos <= accumulated + seg.length) {
+            targetSegment = seg;
+            localPos = pos - accumulated;
+            break;
+          }
+          accumulated += seg.length;
+        }
+
+        // Ensure localPos is strictly within the segment bounds
+        localPos = Math.max(0, Math.min(targetSegment.length, localPos));
+        const normalizedPos = localPos / targetSegment.length;
+
+        newLamps.push({
+          id: Math.random().toString(36).substring(2, 9),
+          type: activeLampType,
+          trackIndex: targetSegment.index,
+          position: normalizedPos,
+          rotation: activeLampType === LampType.SPOT_DIRECTIONAL ? (Math.random() - 0.5) * 2 * Math.PI : 0
+        });
+      }
+
+      const updatedSystems = [...prev.systems];
+      updatedSystems[systemIndex] = {
+        ...system,
+        lamps: newLamps
+      };
+
+      return { ...prev, systems: updatedSystems };
+    });
+  }, [activeLampType, config, saveHistory]);
+
   return (
-    <div className="flex flex-col md:flex-row h-screen w-full bg-white text-gray-900 overflow-hidden relative">
-      <div className="flex-1 relative cursor-crosshair w-full h-full">
+    <div className="h-screen w-full bg-white text-gray-900 overflow-hidden relative">
+      <div className="absolute inset-0 cursor-crosshair">
         <Scene3D 
           config={config} 
           activeLampType={activeLampType}
@@ -292,27 +420,30 @@ const App: React.FC = () => {
           onUpdateObjectPos={updateObjectPosition}
           onCloneObject={cloneObject}
           onDeleteObject={deleteObject}
+          onDeleteSystem={deleteSystem}
           onSelectObject={(id) => setConfig(prev => ({ ...prev, selectedObjectId: id }))}
           deleteMode={deleteMode}
+          isExportingImage={isExportingImage}
         />
-        <div className="absolute top-4 left-4 md:top-auto md:bottom-8 md:left-8 w-32 md:w-48 z-10 pointer-events-none">
-          <img 
-            src={LOGO_URL} 
-            alt="EOS Logo" 
-            className="w-full h-auto drop-shadow-md" 
-            crossOrigin="anonymous"
-          />
-        </div>
-
-        {/* Mobile Top Right Info */}
-        <div className="md:hidden absolute top-4 right-4 z-10 flex items-center gap-3 bg-white/90 backdrop-blur-md px-4 py-2 rounded-full shadow-lg border border-gray-100">
-          <span className="font-bold text-sm">${quoteData.total.toLocaleString()}</span>
-          <div className="w-px h-4 bg-gray-300"></div>
-          <button onClick={handleDownloadPDF} className="text-black hover:text-gray-600 transition-colors">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-          </button>
-        </div>
       </div>
+      <div className="absolute top-4 left-4 w-32 md:w-48 z-10 pointer-events-none">
+        <img 
+          src={LOGO_URL} 
+          alt="EOS Logo" 
+          className="w-full h-auto drop-shadow-md" 
+          crossOrigin="anonymous"
+        />
+      </div>
+
+      {/* Top Right Info */}
+      <div className="absolute top-4 right-4 z-10 flex items-center gap-3 bg-white/90 backdrop-blur-md px-4 py-2 rounded-full shadow-lg border border-gray-100">
+        <span className="font-bold text-sm">${quoteData.total.toLocaleString()}</span>
+        <div className="w-px h-4 bg-gray-300"></div>
+        <button onClick={handleDownloadPDF} className="text-black hover:text-gray-600 transition-colors">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+        </button>
+      </div>
+
       <Sidebar 
         config={config} 
         setConfig={setConfig} 
@@ -331,6 +462,7 @@ const App: React.FC = () => {
         setDeleteMode={setDeleteMode}
         onEnvTypeChange={handleEnvironmentTypeChange}
         onRotateObject={rotateObject}
+        onExpressLighting={handleExpressLighting}
       />
       <ProductModal productType={selectedProduct} onClose={() => setSelectedProduct(null)} />
     </div>

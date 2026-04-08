@@ -1,7 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ConfigState, LayoutType, LampType, MountingType, EnvironmentType, PRICING, TrackSystemConfig } from '../types';
-import { Settings, Box, GitCommit, Lightbulb, FileText, Download, Undo, Trash2, RotateCw, Plus, X } from 'lucide-react';
+import { Settings, Box, GitCommit, Lightbulb, FileText, Download, Undo, Trash2, RotateCw, Plus, X, Zap, GripHorizontal, GripVertical } from 'lucide-react';
 
 interface SidebarProps {
   config: ConfigState;
@@ -21,15 +21,88 @@ interface SidebarProps {
   setDeleteMode: (val: boolean) => void;
   onEnvTypeChange: (type: EnvironmentType) => void;
   onRotateObject: (id: string) => void;
+  onExpressLighting: (count: number) => void;
 }
+
+type SnapPosition = 'top' | 'bottom' | 'left' | 'right' | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
 
 export const Sidebar: React.FC<SidebarProps> = ({ 
   config, setConfig, updateConfig, quoteData, activeLampType, setActiveLampType, 
   onDownloadPDF, onExport3D, onProductDetail, logoUrl, onUndo, canUndo, 
-  onToggleEnv, deleteMode, setDeleteMode, onEnvTypeChange, onRotateObject
+  onToggleEnv, deleteMode, setDeleteMode, onEnvTypeChange, onRotateObject, onExpressLighting
 }) => {
   const [activeTab, setActiveTab] = useState<string | null>(null);
-  
+  const [expressCount, setExpressCount] = useState(5);
+  const [snapPos, setSnapPos] = useState<SnapPosition>('right');
+  const [isDragging, setIsDragging] = useState(false);
+
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handlePointerMove = (e: PointerEvent) => {
+      const x = e.clientX / window.innerWidth;
+      const y = e.clientY / window.innerHeight;
+
+      let newPos: SnapPosition = 'right';
+
+      if (x < 0.33) {
+        if (y < 0.33) newPos = 'top-left';
+        else if (y > 0.66) newPos = 'bottom-left';
+        else newPos = 'left';
+      } else if (x > 0.66) {
+        if (y < 0.33) newPos = 'top-right';
+        else if (y > 0.66) newPos = 'bottom-right';
+        else newPos = 'right';
+      } else {
+        if (y < 0.5) newPos = 'top';
+        else newPos = 'bottom';
+      }
+
+      setSnapPos(newPos);
+    };
+
+    const handlePointerUp = () => {
+      setIsDragging(false);
+    };
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+    };
+  }, [isDragging]);
+
+  const isHorizontal = snapPos === 'top' || snapPos === 'bottom' || snapPos === 'bottom-left' || snapPos === 'bottom-right';
+
+  const getContainerClasses = () => {
+    const base = "absolute z-20 pointer-events-none flex gap-4 transition-all duration-300 ease-in-out";
+    const mobile = "bottom-8 left-1/2 -translate-x-1/2 flex-col w-full max-w-[90%]";
+    
+    let desktop = "";
+    switch (snapPos) {
+      case 'top': desktop = "md:top-8 md:bottom-auto md:left-1/2 md:-translate-x-1/2 md:right-auto md:translate-y-0 md:flex-col-reverse md:items-center"; break;
+      case 'bottom': desktop = "md:bottom-8 md:top-auto md:left-1/2 md:-translate-x-1/2 md:right-auto md:translate-y-0 md:flex-col md:items-center"; break;
+      case 'left': desktop = "md:left-8 md:right-auto md:top-1/2 md:-translate-y-1/2 md:bottom-auto md:translate-x-0 md:flex-row-reverse md:items-center"; break;
+      case 'right': desktop = "md:right-8 md:left-auto md:top-1/2 md:-translate-y-1/2 md:bottom-auto md:translate-x-0 md:flex-row md:items-center"; break;
+      case 'top-left': desktop = "md:top-24 md:left-8 md:bottom-auto md:right-auto md:translate-x-0 md:translate-y-0 md:flex-row-reverse md:items-start"; break;
+      case 'top-right': desktop = "md:top-24 md:right-8 md:bottom-auto md:left-auto md:translate-x-0 md:translate-y-0 md:flex-row md:items-start"; break;
+      case 'bottom-left': desktop = "md:bottom-8 md:left-8 md:top-auto md:right-auto md:translate-x-0 md:translate-y-0 md:flex-col md:items-start"; break;
+      case 'bottom-right': desktop = "md:bottom-8 md:right-8 md:top-auto md:left-auto md:translate-x-0 md:translate-y-0 md:flex-col md:items-end"; break;
+    }
+    
+    return `${base} ${mobile} ${desktop} md:max-w-none md:w-auto`;
+  };
+
+  const toolbarClasses = `bg-white/90 backdrop-blur-md rounded-full shadow-2xl p-2 flex items-center justify-center pointer-events-auto border border-gray-100 transition-all duration-300 ${
+    isHorizontal ? 'md:flex-row md:overflow-x-auto md:max-w-full' : 'md:flex-col md:overflow-y-auto md:max-h-[80vh]'
+  } flex-row overflow-x-auto max-w-full gap-2`;
+
+  const panelClasses = `bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl p-5 pointer-events-auto overflow-y-auto border border-gray-100 transition-all duration-300 ${
+    isHorizontal ? 'md:max-h-[60vh] md:w-[600px] md:max-w-[90vw]' : 'md:max-h-[80vh] md:w-[340px]'
+  } max-h-[60vh] w-full`;
+
   const selectedSystem = config.systems.find(s => s.id === config.selectedSystemId);
   const selectedObject = config.envObjects.find(o => o.id === config.selectedObjectId);
   
@@ -203,6 +276,32 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </button>
         ))}
       </div>
+
+      <div className="mt-6 space-y-3 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+        <span className="uppercase font-bold text-gray-400 tracking-widest text-[7px] md:text-[10px]">Colocación Express</span>
+        <div className="flex items-center gap-3">
+          <span className="text-[7px] md:text-[9px] uppercase font-bold text-gray-500 w-12">Cantidad</span>
+          <input 
+            type="range" min="1" max="30" step="1" 
+            value={expressCount} 
+            onChange={e => {
+              const val = parseInt(e.target.value);
+              setExpressCount(val);
+              onExpressLighting(val);
+            }} 
+            className="flex-1 accent-black h-1" 
+          />
+          <span className="font-bold text-[9px] md:text-[11px] w-6 text-right">{expressCount}</span>
+        </div>
+        <button 
+          onClick={() => onExpressLighting(expressCount)}
+          disabled={!activeLampType}
+          className={`w-full py-2 rounded-lg uppercase font-bold text-[7px] md:text-[10px] transition-all flex items-center justify-center gap-2 ${activeLampType ? 'bg-black text-white hover:bg-gray-800 active:scale-95 shadow-md' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
+        >
+          <Zap size={12} /> Generar Aleatorio
+        </button>
+        {!activeLampType && <p className="text-[7px] text-red-400 text-center uppercase font-bold">Selecciona un tipo de luminaria arriba</p>}
+      </div>
     </section>
   );
 
@@ -261,39 +360,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <>
-      {/* --- DESKTOP SIDEBAR --- */}
-      <div className="hidden md:flex w-[340px] bg-white border-l flex-col h-full z-20 text-[10px] shadow-2xl overflow-hidden shrink-0">
-        <div className="p-4 border-b flex items-center justify-between bg-white shrink-0">
-          <div className="flex items-center gap-3">
-            <img src={logoUrl} alt="EOS" className="h-10 w-auto object-contain" crossOrigin="anonymous" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-            <h1 className="font-bold uppercase tracking-tighter text-gray-900 leading-tight border-l-2 border-gray-200 pl-3">
-              Configurador <br/> <span className="font-light text-gray-400 text-[8px]">Iluminación</span>
-            </h1>
-          </div>
-          <button 
-            onClick={onUndo} 
-            disabled={!canUndo}
-            className={`p-2 rounded-full border transition-all ${canUndo ? 'border-gray-300 text-black hover:bg-gray-100' : 'border-gray-100 text-gray-200 cursor-not-allowed'}`}
-          >
-            <Undo size={16} />
-          </button>
-        </div>
-
-        <div className="p-4 space-y-6 overflow-y-auto flex-1 scrollbar-hide">
-          {renderSettings()}
-          {renderEnvironment()}
-          <div className="border-t border-gray-50 pt-4">{renderTracks()}</div>
-          <div className="border-t border-gray-50 pt-4">{renderLamps()}</div>
-          <div className="border-t border-gray-50 pt-4">{renderQuote()}</div>
-        </div>
-      </div>
-
-      {/* --- MOBILE FLOATING SIDEBAR --- */}
-      <div className="md:hidden absolute bottom-8 left-4 right-4 flex flex-col gap-2 z-20 pointer-events-none">
+      {/* --- UNIVERSAL FLOATING SIDEBAR --- */}
+      <div className={getContainerClasses()}>
         
         {/* Active Panel */}
         {activeTab && (
-          <div className="bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl p-5 pointer-events-auto max-h-[60vh] overflow-y-auto relative border border-gray-100">
+          <div className={panelClasses}>
             {activeTab === 'settings' && renderSettings()}
             {activeTab === 'environment' && renderEnvironment()}
             {activeTab === 'tracks' && renderTracks()}
@@ -303,7 +375,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
         )}
 
         {/* Floating Toolbar */}
-        <div className="bg-white/90 backdrop-blur-md rounded-full shadow-2xl p-2 flex items-center justify-between pointer-events-auto overflow-x-auto gap-2 border border-gray-100">
+        <div className={toolbarClasses}>
+          <button 
+            className="p-3 cursor-grab active:cursor-grabbing text-gray-400 hover:text-black hidden md:flex items-center justify-center shrink-0"
+            onPointerDown={(e) => {
+              e.preventDefault();
+              setIsDragging(true);
+            }}
+          >
+            {isHorizontal ? <GripVertical size={20} /> : <GripHorizontal size={20} />}
+          </button>
+
           <button 
             onClick={() => setActiveTab(activeTab === 'settings' ? null : 'settings')}
             className={`p-3 rounded-full shrink-0 transition-all ${activeTab === 'settings' ? 'bg-black text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
@@ -339,7 +421,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <FileText size={20} />
           </button>
 
-          <div className="w-px h-8 bg-gray-200 mx-1 shrink-0" />
+          <div className={`bg-gray-200 shrink-0 ${isHorizontal ? 'w-px h-8 mx-1' : 'md:h-px md:w-8 md:my-1 w-px h-8 mx-1'}`} />
 
           <button 
             onClick={() => setDeleteMode(!deleteMode)}
