@@ -289,7 +289,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* --- MOBILE FLOATING SIDEBAR --- */}
-      <div className="md:hidden absolute bottom-4 left-4 right-4 flex flex-col gap-2 z-20 pointer-events-none">
+      <div className="md:hidden absolute bottom-8 left-4 right-4 flex flex-col gap-2 z-20 pointer-events-none">
         
         {/* Active Panel */}
         {activeTab && (

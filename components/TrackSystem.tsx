@@ -61,9 +61,12 @@ export const TrackSystem: React.FC<TrackSystemProps> = ({
             if (!draggingLamp) setHoveredTrack(null);
           }}
           onClick={(e) => {
-             if (activeLampType && hoveredTrack?.index === index && !draggingLamp) {
+             if (activeLampType && !draggingLamp) {
                e.stopPropagation();
-               onTrackClick(e, index, hoveredTrack.pos);
+               const localPoint = e.eventObject.parent!.worldToLocal(e.point.clone());
+               const localX = localPoint.x;
+               const normalizedPos = Math.max(0, Math.min(1, (localX + length / 2) / length));
+               onTrackClick(e, index, normalizedPos);
              }
           }}
           position={[0, trackY, 0]}
