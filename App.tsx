@@ -303,6 +303,15 @@ const App: React.FC = () => {
             crossOrigin="anonymous"
           />
         </div>
+
+        {/* Mobile Top Right Info */}
+        <div className="md:hidden absolute top-4 right-4 z-10 flex items-center gap-3 bg-white/90 backdrop-blur-md px-4 py-2 rounded-full shadow-lg border border-gray-100">
+          <span className="font-bold text-sm">${quoteData.total.toLocaleString()}</span>
+          <div className="w-px h-4 bg-gray-300"></div>
+          <button onClick={handleDownloadPDF} className="text-black hover:text-gray-600 transition-colors">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+          </button>
+        </div>
       </div>
       <Sidebar 
         config={config} 

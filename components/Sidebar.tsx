@@ -61,32 +61,30 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const renderSettings = () => (
     <section className="space-y-4">
       <span className="uppercase font-bold text-gray-400 tracking-widest text-[7px] md:text-[10px]">Configuración Técnica</span>
-      <div className="space-y-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">
-        <div className="space-y-3">
-          <div className="flex flex-col gap-1.5">
-            <div className="flex justify-between items-center">
-              <span className="text-[7px] md:text-[10px] uppercase font-bold text-gray-500">Altura del Techo</span>
-              <span className="font-bold text-[9px] md:text-[12px]">{config.ceilingHeight.toFixed(1)}m</span>
-            </div>
-            <input 
-              type="range" min="2.2" max="5" step="0.1" 
-              value={config.ceilingHeight} 
-              onChange={e => updateConfig('ceilingHeight', parseFloat(e.target.value))} 
-              className="w-full accent-black h-1" 
-            />
+      <div className="space-y-3">
+        <div className="flex flex-col gap-1.5">
+          <div className="flex justify-between items-center">
+            <span className="text-[7px] md:text-[10px] uppercase font-bold text-gray-500">Altura del Techo</span>
+            <span className="font-bold text-[9px] md:text-[12px]">{config.ceilingHeight.toFixed(1)}m</span>
           </div>
-          <div className="flex flex-col gap-1.5">
-            <div className="flex justify-between items-center">
-              <span className="text-[7px] md:text-[10px] uppercase font-bold text-gray-500">Cuelgue Riel</span>
-              <span className="font-bold text-[9px] md:text-[12px]">{config.suspensionHeight.toFixed(1)}m</span>
-            </div>
-            <input 
-              type="range" min="0" max="2" step="0.1" 
-              value={config.suspensionHeight} 
-              onChange={e => updateConfig('suspensionHeight', parseFloat(e.target.value))} 
-              className="w-full accent-black h-1" 
-            />
+          <input 
+            type="range" min="2.2" max="5" step="0.1" 
+            value={config.ceilingHeight} 
+            onChange={e => updateConfig('ceilingHeight', parseFloat(e.target.value))} 
+            className="w-full accent-black h-1" 
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <div className="flex justify-between items-center">
+            <span className="text-[7px] md:text-[10px] uppercase font-bold text-gray-500">Cuelgue Riel</span>
+            <span className="font-bold text-[9px] md:text-[12px]">{config.suspensionHeight.toFixed(1)}m</span>
           </div>
+          <input 
+            type="range" min="0" max="2" step="0.1" 
+            value={config.suspensionHeight} 
+            onChange={e => updateConfig('suspensionHeight', parseFloat(e.target.value))} 
+            className="w-full accent-black h-1" 
+          />
         </div>
       </div>
     </section>
@@ -141,7 +139,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <Plus size={10} /> Nuevo
         </button>
       </div>
-      <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-hide">
+      <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-hide mt-2">
         {config.systems.map((s, i) => (
           <button 
             key={s.id} 
@@ -154,7 +152,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {selectedSystem && (
-        <div className="space-y-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+        <div className="space-y-4 mt-4">
           <div className="grid grid-cols-2 gap-1.5">
             {Object.values(LayoutType).map(v => (
               <button key={v} onClick={() => updateSelectedSystem('layout', v)} className={`py-1.5 border rounded-lg uppercase font-bold text-[7px] md:text-[9px] transition-all ${selectedSystem.layout === v ? 'bg-black text-white border-black' : 'bg-white text-gray-400 border-gray-100'}`}>{v}</button>
@@ -179,7 +177,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
             )}
           </div>
-          <button onClick={rotateSystem} className="w-full py-2 bg-white border border-gray-200 rounded-lg uppercase font-bold text-[7px] md:text-[10px] hover:border-black transition-all flex items-center justify-center gap-2 active:scale-95">
+          <button onClick={rotateSystem} className="w-full py-2 bg-gray-50 border border-gray-200 rounded-lg uppercase font-bold text-[7px] md:text-[10px] hover:border-black transition-all flex items-center justify-center gap-2 active:scale-95">
              Rotar Riel 90° <RotateCw size={12} />
           </button>
         </div>
@@ -211,7 +209,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const renderQuote = () => (
     <section className="space-y-3">
       <span className="uppercase font-bold text-gray-400 tracking-widest text-[7px] md:text-[10px]">Detalle de Cotización</span>
-      <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 space-y-2">
+      <div className="space-y-2">
         <div className="flex justify-between items-center text-[8px] md:text-[10px] text-gray-500 uppercase font-bold">
           <span>Componente</span>
           <span>Total</span>
@@ -242,7 +240,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-2 pt-2 border-t border-gray-100">
         <label className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-100 cursor-pointer hover:border-gray-300 transition-colors">
           <div className="flex items-center gap-3">
             <input type="checkbox" checked={config.includeInstallation} onChange={e => updateConfig('includeInstallation', e.target.checked)} className="w-4 h-4 accent-black rounded" />
@@ -258,17 +256,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <span className="font-bold text-[9px] md:text-[11px] text-gray-400">${quoteData.shippingCost}</span>
         </label>
       </div>
-
-      <div className="bg-black text-white p-5 rounded-3xl shadow-xl">
-        <div className="flex justify-between items-center">
-          <span className="text-gray-400 uppercase tracking-widest text-[8px] md:text-[10px] font-bold">Total Presupuesto</span>
-          <span className="text-2xl font-light">${quoteData.total.toLocaleString()}</span>
-        </div>
-      </div>
-      
-      <button onClick={onDownloadPDF} className="w-full py-4 mt-2 bg-black text-white font-bold uppercase text-[9px] md:text-[11px] tracking-widest rounded-xl hover:bg-gray-800 transition-all shadow-lg active:scale-98 flex items-center justify-center gap-2">
-        <Download size={14} /> Descargar PDF
-      </button>
     </section>
   );
 
@@ -306,13 +293,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         
         {/* Active Panel */}
         {activeTab && (
-          <div className="bg-white rounded-3xl shadow-2xl p-5 pointer-events-auto max-h-[60vh] overflow-y-auto relative">
-            <button 
-              onClick={() => setActiveTab(null)}
-              className="absolute top-4 right-4 p-1 bg-gray-100 rounded-full text-gray-500 hover:bg-gray-200"
-            >
-              <X size={16} />
-            </button>
+          <div className="bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl p-5 pointer-events-auto max-h-[60vh] overflow-y-auto relative border border-gray-100">
             {activeTab === 'settings' && renderSettings()}
             {activeTab === 'environment' && renderEnvironment()}
             {activeTab === 'tracks' && renderTracks()}
