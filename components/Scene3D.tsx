@@ -153,6 +153,9 @@ export const Scene3D: React.FC<Scene3DProps> = ({
                 onRemoveLamp={(lampId) => onRemoveLamp(sys.id, lampId)}
                 isSelected={config.selectedSystemId === sys.id}
                 setGlobalDraggingLamp={setDraggingLampId}
+                selectedObjectId={config.selectedObjectId}
+                onSelectObject={onSelectObject}
+                deleteMode={deleteMode}
               />
             </group>
           ))}
