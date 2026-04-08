@@ -278,8 +278,8 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen w-full bg-white text-gray-900 overflow-hidden relative">
-      <div className="flex-1 relative cursor-crosshair">
+    <div className="flex flex-col md:flex-row h-screen w-full bg-white text-gray-900 overflow-hidden relative">
+      <div className="flex-1 relative cursor-crosshair w-full h-full">
         <Scene3D 
           config={config} 
           activeLampType={activeLampType}
@@ -295,7 +295,7 @@ const App: React.FC = () => {
           onSelectObject={(id) => setConfig(prev => ({ ...prev, selectedObjectId: id }))}
           deleteMode={deleteMode}
         />
-        <div className="absolute bottom-8 left-8 w-48 z-10">
+        <div className="absolute top-4 left-4 md:top-auto md:bottom-8 md:left-8 w-32 md:w-48 z-10 pointer-events-none">
           <img 
             src={LOGO_URL} 
             alt="EOS Logo" 
