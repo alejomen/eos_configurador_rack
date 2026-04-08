@@ -43,7 +43,9 @@ const App: React.FC = () => {
     includeInstallation: false,
     includeShipping: false,
     showEnvironment: true,
-    envObjects: [...DEFAULT_HOME]
+    envObjects: [...DEFAULT_HOME],
+    projectName: '',
+    clientName: ''
   });
 
   const [history, setHistory] = useState<ConfigState[]>([]);
@@ -246,11 +248,15 @@ const App: React.FC = () => {
             <title>Cotización EOS Iluminación</title>
             <style>
               body { font-family: 'Inter', sans-serif; padding: 40px; color: #333; }
-              .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 20px; }
-              .logo { height: 60px; }
-              .title { text-align: right; }
-              .preview-image { width: 100%; height: 250px; display: flex; justify-content: center; align-items: center; margin: 20px 0; }
-              .preview-image img { width: 100%; height: 100%; object-fit: contain; }
+              .top-section { display: flex; width: 100%; height: 250px; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 20px; }
+              .info-col { width: 33.33%; height: 100%; padding-right: 20px; display: flex; flex-direction: column; justify-content: flex-start; border-right: 1px solid #eee; }
+              .logo { height: 50px; margin-bottom: 20px; object-fit: contain; align-self: flex-start; }
+              .info-col h1 { margin: 0 0 15px 0; font-weight: 300; font-size: 20px; text-align: left; }
+              .info-item { margin-bottom: 10px; text-align: left; }
+              .info-label { font-size: 10px; font-weight: bold; color: #888; text-transform: uppercase; display: block; }
+              .info-value { font-size: 14px; font-weight: 500; color: #000; }
+              .image-col { width: 66.66%; height: 100%; display: flex; justify-content: center; align-items: center; padding-left: 20px; }
+              .image-col img { max-width: 100%; max-height: 100%; object-fit: contain; }
               table { width: 100%; border-collapse: collapse; margin-top: 20px; }
               th { text-align: left; border-bottom: 1px solid #eee; padding: 10px; font-size: 12px; text-transform: uppercase; color: #888; }
               td { padding: 15px 10px; border-bottom: 1px solid #eee; font-size: 14px; }
@@ -262,19 +268,29 @@ const App: React.FC = () => {
             </style>
           </head>
           <body>
-            <div class="header">
-              <img src="${LOGO_URL}" class="logo" />
-              <div class="title">
-                <h1 style="margin:0; font-weight:300;">COTIZACIÓN FORMAL</h1>
-                <p style="margin:5px 0 0 0; color:#888;">Fecha: ${date}</p>
+            <div class="top-section">
+              <div class="info-col">
+                <img src="${LOGO_URL}" class="logo" />
+                <h1>COTIZACIÓN FORMAL</h1>
+                <div class="info-item">
+                  <span class="info-label">Fecha</span>
+                  <span class="info-value">${date}</span>
+                </div>
+                ${config.projectName ? `
+                <div class="info-item">
+                  <span class="info-label">Proyecto</span>
+                  <span class="info-value">${config.projectName}</span>
+                </div>` : ''}
+                ${config.clientName ? `
+                <div class="info-item">
+                  <span class="info-label">Cliente</span>
+                  <span class="info-value">${config.clientName}</span>
+                </div>` : ''}
+              </div>
+              <div class="image-col">
+                ${imageUrl ? `<img src="${imageUrl}" alt="Vista del Sistema de Iluminación" />` : ''}
               </div>
             </div>
-            
-            ${imageUrl ? `
-            <div class="preview-image">
-              <img src="${imageUrl}" alt="Vista del Sistema de Iluminación" />
-            </div>
-            ` : ''}
 
             <table>
               <thead>

@@ -40,6 +40,12 @@ export const Scene3D: React.FC<Scene3DProps> = ({
       if (type === 'system') onDeleteSystem(id);
       return;
     }
+    
+    // Si estamos en modo de agregar lámpara, no iniciar el arrastre del sistema
+    if (type === 'system' && activeLampType) {
+      return;
+    }
+
     if (type === 'object') {
       onSelectObject(id);
     } else {

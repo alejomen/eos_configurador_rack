@@ -306,8 +306,32 @@ export const Sidebar: React.FC<SidebarProps> = ({
   );
 
   const renderQuote = () => (
-    <section className="space-y-3">
-      <span className="uppercase font-bold text-gray-400 tracking-widest text-[7px] md:text-[10px]">Detalle de Cotización</span>
+    <section className="space-y-4">
+      <span className="uppercase font-bold text-gray-400 tracking-widest text-[7px] md:text-[10px]">Detalles de Cotización</span>
+      
+      <div className="space-y-3 mb-4">
+        <div>
+          <label className="block text-[8px] md:text-[10px] font-bold text-gray-500 uppercase mb-1">Nombre del Proyecto</label>
+          <input 
+            type="text" 
+            value={config.projectName || ''} 
+            onChange={e => updateConfig('projectName', e.target.value)}
+            className="w-full p-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:border-black"
+            placeholder="Ej. Oficina Central"
+          />
+        </div>
+        <div>
+          <label className="block text-[8px] md:text-[10px] font-bold text-gray-500 uppercase mb-1">Nombre del Cliente</label>
+          <input 
+            type="text" 
+            value={config.clientName || ''} 
+            onChange={e => updateConfig('clientName', e.target.value)}
+            className="w-full p-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:border-black"
+            placeholder="Ej. Juan Pérez"
+          />
+        </div>
+      </div>
+
       <div className="space-y-2">
         <div className="flex justify-between items-center text-[8px] md:text-[10px] text-gray-500 uppercase font-bold">
           <span>Componente</span>

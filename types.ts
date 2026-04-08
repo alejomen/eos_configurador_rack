@@ -61,6 +61,8 @@ export interface ConfigState {
   includeShipping: boolean;
   showEnvironment: boolean;
   envObjects: EnvironmentObject[];
+  projectName?: string;
+  clientName?: string;
 }
 
 export const PRICING = {
