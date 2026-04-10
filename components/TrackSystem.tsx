@@ -17,18 +17,21 @@ interface TrackSystemProps {
   setGlobalDraggingLamp: (id: string | null) => void;
   selectedObjectId: string | null;
   onSelectObject: (id: string | null) => void;
+  selectedLampId?: string | null;
+  onSelectLamp: (id: string | null) => void;
+  onUpdateLampTarget: (systemId: string, lampId: string, target: [number, number, number]) => void;
   deleteMode: boolean;
 }
 
 export const TrackSystem: React.FC<TrackSystemProps> = ({ 
-  config, systemId, systemConfig, onTrackClick, onUpdateLampPos, activeLampType, onRemoveLamp, isSelected, setGlobalDraggingLamp, selectedObjectId, onSelectObject, deleteMode
+  config, systemId, systemConfig, onTrackClick, onUpdateLampPos, activeLampType, onRemoveLamp, isSelected, setGlobalDraggingLamp, selectedObjectId, onSelectObject, selectedLampId, onSelectLamp, onUpdateLampTarget, deleteMode
 }) => {
   const { mounting, width, depth, lamps } = systemConfig;
   const { ceilingHeight, suspensionHeight } = config;
   const [hoveredTrack, setHoveredTrack] = useState<{ index: number; pos: number } | null>(null);
   
   // Estado para el arrastre de lámparas: ID y offset local para evitar saltos
-  const [draggingLamp, setDraggingLamp] = useState<{ id: string, index: number, offset: number } | null>(null);
+  const [draggingLamp, setDraggingLamp] = useState<{ id: string, index: number, offset: number, planeY: number } | null>(null);
 
   const trackY = mounting === MountingType.SUSPENDIDO ? ceilingHeight - suspensionHeight : (mounting === MountingType.SUPERFICIAL ? ceilingHeight - 0.02 : ceilingHeight + 0.015);
   const railThickness = 0.04;
@@ -83,7 +86,7 @@ export const TrackSystem: React.FC<TrackSystemProps> = ({
 
         {draggingLamp && draggingLamp.index === index && (
           <mesh
-            position={[0, 0.01, 0]}
+            position={[0, draggingLamp.planeY, 0]}
             rotation={[-Math.PI / 2, 0, 0]}
             onPointerMove={(e) => {
               e.stopPropagation();
@@ -124,7 +127,7 @@ export const TrackSystem: React.FC<TrackSystemProps> = ({
         {/* Lámparas colocadas */}
         {lamps.filter(l => l.trackIndex === index).map(lamp => {
           const lampX = lamp.position * length - length/2;
-          const isLampSelected = selectedObjectId === lamp.id;
+          const isLampSelected = config.selectedLampId === lamp.id;
           
           return (
             <React.Fragment key={lamp.id}>
@@ -136,11 +139,21 @@ export const TrackSystem: React.FC<TrackSystemProps> = ({
                   if (deleteMode) {
                     onRemoveLamp(lamp.id);
                   } else {
-                    onSelectObject(lamp.id);
+                    onSelectLamp(lamp.id);
+                    // Start dragging
+                    const localPoint = e.eventObject.parent!.worldToLocal(e.point.clone());
+                    const offset = lampX - localPoint.x;
+                    setDraggingLamp({ id: lamp.id, index: index, offset: offset, planeY: localPoint.y });
+                    setGlobalDraggingLamp(lamp.id);
                   }
                 }}
               >
-                <LampModel type={lamp.type} />
+                <LampModel 
+                  type={lamp.type} 
+                  lightsOn={config.lightsOn} 
+                  target={lamp.target} 
+                  isSelected={isLampSelected}
+                />
                 {deleteMode && (
                   <mesh position={[0, -0.1, 0]}>
                     <sphereGeometry args={[0.08]} />
@@ -148,30 +161,6 @@ export const TrackSystem: React.FC<TrackSystemProps> = ({
                   </mesh>
                 )}
               </group>
-
-              {/* The Green Ring on the floor */}
-              {isLampSelected && !deleteMode && (
-                <group
-                  position={[lampX, 0.01, 0]}
-                  onPointerDown={(e) => {
-                    e.stopPropagation();
-                    const localPoint = e.eventObject.parent!.worldToLocal(e.point.clone());
-                    const offset = lampX - localPoint.x;
-                    setDraggingLamp({ id: lamp.id, index: index, offset: offset });
-                    setGlobalDraggingLamp(lamp.id);
-                  }}
-                >
-                  <mesh rotation={[-Math.PI / 2, 0, 0]}>
-                    <ringGeometry args={[0.3, 0.35, 32]} />
-                    <meshBasicMaterial color="#22c55e" transparent opacity={0.8} />
-                  </mesh>
-                  {/* Hit area */}
-                  <mesh rotation={[-Math.PI / 2, 0, 0]}>
-                    <circleGeometry args={[0.6, 32]} />
-                    <meshBasicMaterial transparent opacity={0} />
-                  </mesh>
-                </group>
-              )}
             </React.Fragment>
           );
         })}

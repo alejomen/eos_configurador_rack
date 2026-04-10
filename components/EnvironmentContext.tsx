@@ -4,19 +4,20 @@ import * as THREE from 'three';
 import { ThreeEvent } from '@react-three/fiber';
 import { ConfigState, EnvironmentObject } from '../types';
 
-const getMaterialProps = (isSelected: boolean, isDeleteMode: boolean) => {
+const getMaterialProps = (isSelected: boolean, isDeleteMode: boolean, lightsOn: boolean) => {
   if (isDeleteMode) return { color: '#ef4444', emissive: '#ef4444', emissiveIntensity: 0.2, roughness: 0.8 };
   if (isSelected) return { color: '#4ade80', emissive: '#22c55e', emissiveIntensity: 0.3, roughness: 0.8 };
-  return { color: '#ffffff', roughness: 0.8 };
+  return { color: lightsOn ? '#222222' : '#ffffff', roughness: 0.8 };
 };
 
 interface EnvObjProps {
   selected: boolean;
   deleteMode: boolean;
+  lightsOn: boolean;
 }
 
-const Sofa: React.FC<EnvObjProps> = ({ selected, deleteMode }) => {
-  const mat = getMaterialProps(selected, deleteMode);
+const Sofa: React.FC<EnvObjProps> = ({ selected, deleteMode, lightsOn }) => {
+  const mat = getMaterialProps(selected, deleteMode, lightsOn);
   return (
     <group>
       <mesh position={[0, 0.15, 0.1]} castShadow><boxGeometry args={[2.8, 0.3, 0.8]} /><meshStandardMaterial {...mat} /></mesh>
@@ -25,8 +26,8 @@ const Sofa: React.FC<EnvObjProps> = ({ selected, deleteMode }) => {
   );
 };
 
-const CoffeeTable: React.FC<EnvObjProps> = ({ selected, deleteMode }) => {
-  const mat = getMaterialProps(selected, deleteMode);
+const CoffeeTable: React.FC<EnvObjProps> = ({ selected, deleteMode, lightsOn }) => {
+  const mat = getMaterialProps(selected, deleteMode, lightsOn);
   return (
     <group>
       <mesh position={[0, 0.125, 0]} castShadow>
@@ -37,8 +38,8 @@ const CoffeeTable: React.FC<EnvObjProps> = ({ selected, deleteMode }) => {
   );
 };
 
-const OfficeTable: React.FC<EnvObjProps> = ({ selected, deleteMode }) => {
-  const mat = getMaterialProps(selected, deleteMode);
+const OfficeTable: React.FC<EnvObjProps> = ({ selected, deleteMode, lightsOn }) => {
+  const mat = getMaterialProps(selected, deleteMode, lightsOn);
   const thickness = 0.06;
   const width = 2.0;
   const depth = 1.0;
@@ -53,8 +54,8 @@ const OfficeTable: React.FC<EnvObjProps> = ({ selected, deleteMode }) => {
   );
 };
 
-const Sideboard: React.FC<EnvObjProps> = ({ selected, deleteMode }) => {
-  const mat = getMaterialProps(selected, deleteMode);
+const Sideboard: React.FC<EnvObjProps> = ({ selected, deleteMode, lightsOn }) => {
+  const mat = getMaterialProps(selected, deleteMode, lightsOn);
   return (
     <group>
       <mesh castShadow position={[0, 0.35, 0]}><boxGeometry args={[2.0, 0.7, 0.4]} /><meshStandardMaterial {...mat} /></mesh>
@@ -62,8 +63,8 @@ const Sideboard: React.FC<EnvObjProps> = ({ selected, deleteMode }) => {
   );
 };
 
-const LowCabinet: React.FC<EnvObjProps> = ({ selected, deleteMode }) => {
-  const mat = getMaterialProps(selected, deleteMode);
+const LowCabinet: React.FC<EnvObjProps> = ({ selected, deleteMode, lightsOn }) => {
+  const mat = getMaterialProps(selected, deleteMode, lightsOn);
   return (
     <group>
       <mesh castShadow position={[0, 0.3, 0]}><boxGeometry args={[1.6, 0.5, 0.4]} /><meshStandardMaterial {...mat} /></mesh>
@@ -71,8 +72,8 @@ const LowCabinet: React.FC<EnvObjProps> = ({ selected, deleteMode }) => {
   );
 };
 
-const LoungeChair: React.FC<EnvObjProps> = ({ selected, deleteMode }) => {
-  const mat = getMaterialProps(selected, deleteMode);
+const LoungeChair: React.FC<EnvObjProps> = ({ selected, deleteMode, lightsOn }) => {
+  const mat = getMaterialProps(selected, deleteMode, lightsOn);
   return (
     <group>
       <mesh position={[0, 0.15, 0.1]} castShadow><boxGeometry args={[0.9, 0.3, 0.8]} /><meshStandardMaterial {...mat} /></mesh>
@@ -81,8 +82,8 @@ const LoungeChair: React.FC<EnvObjProps> = ({ selected, deleteMode }) => {
   );
 };
 
-const Bookshelf: React.FC<EnvObjProps> = ({ selected, deleteMode }) => {
-  const mat = getMaterialProps(selected, deleteMode);
+const Bookshelf: React.FC<EnvObjProps> = ({ selected, deleteMode, lightsOn }) => {
+  const mat = getMaterialProps(selected, deleteMode, lightsOn);
   return (
     <group>
       <mesh position={[0, 1.0, 0]} castShadow><boxGeometry args={[1.4, 2.0, 0.35]} /><meshStandardMaterial {...mat} /></mesh>
@@ -116,13 +117,13 @@ export const EnvironmentContext: React.FC<{
             onDoubleClick={(e) => { e.stopPropagation(); onDoubleClick(e as any, obj.id); }}
           >
             <group>
-              {obj.type === 'sofa' && <Sofa selected={isSelected} deleteMode={isDelete} />}
-              {obj.type === 'coffeeTable' && <CoffeeTable selected={isSelected} deleteMode={isDelete} />}
-              {obj.type === 'officeTable' && <OfficeTable selected={isSelected} deleteMode={isDelete} />}
-              {obj.type === 'sideboard' && <Sideboard selected={isSelected} deleteMode={isDelete} />}
-              {obj.type === 'loungeChair' && <LoungeChair selected={isSelected} deleteMode={isDelete} />}
-              {obj.type === 'bookshelf' && <Bookshelf selected={isSelected} deleteMode={isDelete} />}
-              {obj.type === 'lowCabinet' && <LowCabinet selected={isSelected} deleteMode={isDelete} />}
+              {obj.type === 'sofa' && <Sofa selected={isSelected} deleteMode={isDelete} lightsOn={config.lightsOn} />}
+              {obj.type === 'coffeeTable' && <CoffeeTable selected={isSelected} deleteMode={isDelete} lightsOn={config.lightsOn} />}
+              {obj.type === 'officeTable' && <OfficeTable selected={isSelected} deleteMode={isDelete} lightsOn={config.lightsOn} />}
+              {obj.type === 'sideboard' && <Sideboard selected={isSelected} deleteMode={isDelete} lightsOn={config.lightsOn} />}
+              {obj.type === 'loungeChair' && <LoungeChair selected={isSelected} deleteMode={isDelete} lightsOn={config.lightsOn} />}
+              {obj.type === 'bookshelf' && <Bookshelf selected={isSelected} deleteMode={isDelete} lightsOn={config.lightsOn} />}
+              {obj.type === 'lowCabinet' && <LowCabinet selected={isSelected} deleteMode={isDelete} lightsOn={config.lightsOn} />}
             </group>
           </group>
         );

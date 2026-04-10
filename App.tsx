@@ -6,7 +6,7 @@ import { ProductModal } from './components/ProductModal';
 import { ConfigState, LayoutType, MountingType, PlacedLamp, PRICING, LampType, EnvironmentType, TrackSystemConfig, EnvironmentObject, EnvObjectType, PRODUCT_DETAILS } from './types';
 import * as THREE from 'three';
 
-const LOGO_URL = "/logo.svg";
+const LOGO_URL = "/logo.png";
 
 const DEFAULT_HOME: EnvironmentObject[] = [
   { id: 'h1', type: 'sofa', position: [0, 0, -2.5], rotation: [0, 0, 0] },
@@ -45,7 +45,9 @@ const App: React.FC = () => {
     showEnvironment: true,
     envObjects: [...DEFAULT_HOME],
     projectName: '',
-    clientName: ''
+    clientName: '',
+    lightsOn: false,
+    selectedLampId: null
   });
 
   const [history, setHistory] = useState<ConfigState[]>([]);
@@ -152,6 +154,16 @@ const App: React.FC = () => {
     }));
   }, []);
 
+  const handleUpdateLampTarget = useCallback((systemId: string, lampId: string, newTarget: [number, number, number]) => {
+    setConfig(prev => ({
+      ...prev,
+      systems: prev.systems.map(sys => sys.id === systemId ? {
+        ...sys,
+        lamps: sys.lamps.map(l => l.id === lampId ? { ...l, target: newTarget } : l)
+      } : sys)
+    }));
+  }, []);
+
   const deleteObject = (id: string) => {
     saveHistory(config);
     setConfig(prev => ({
@@ -180,10 +192,15 @@ const App: React.FC = () => {
 
   const addLamp = useCallback((type: LampType, systemId: string, trackIndex: number, position: number) => {
     saveHistory(config);
+    const system = config.systems.find(s => s.id === systemId);
+    const targetX = system ? system.position[0] : 0;
+    const targetZ = system ? system.position[2] : 0;
+
     const newLamp: PlacedLamp = {
       id: Math.random().toString(36).substr(2, 9),
       type, trackIndex, position,
-      rotation: type === LampType.SPOT_DIRECTIONAL ? (Math.random() - 0.5) * 2 * Math.PI : 0
+      rotation: type === LampType.SPOT_DIRECTIONAL ? (Math.random() - 0.5) * 2 * Math.PI : 0,
+      target: type === LampType.SPOT_DIRECTIONAL ? [targetX, 0, targetZ] : undefined
     };
     setConfig(prev => ({
       ...prev,
@@ -270,7 +287,7 @@ const App: React.FC = () => {
           <body>
             <div class="top-section">
               <div class="info-col">
-                <img src="${LOGO_URL}" class="logo" />
+                <img src="${config.logoUrl || LOGO_URL}" class="logo" />
                 <h1>COTIZACIÓN FORMAL</h1>
                 <div class="info-item">
                   <span class="info-label">Fecha</span>
@@ -339,11 +356,14 @@ const App: React.FC = () => {
   };
 
   const handleExpressLighting = useCallback((count: number) => {
-    if (!activeLampType || !config.selectedSystemId) return;
+    if (!activeLampType) return;
 
     saveHistory(config);
     setConfig(prev => {
-      const systemIndex = prev.systems.findIndex(s => s.id === prev.selectedSystemId);
+      const targetSystemId = prev.selectedSystemId || prev.systems[0]?.id;
+      if (!targetSystemId) return prev;
+
+      const systemIndex = prev.systems.findIndex(s => s.id === targetSystemId);
       if (systemIndex === -1) return prev;
 
       const system = prev.systems[systemIndex];
@@ -407,7 +427,8 @@ const App: React.FC = () => {
           type: activeLampType,
           trackIndex: targetSegment.index,
           position: normalizedPos,
-          rotation: activeLampType === LampType.SPOT_DIRECTIONAL ? (Math.random() - 0.5) * 2 * Math.PI : 0
+          rotation: activeLampType === LampType.SPOT_DIRECTIONAL ? (Math.random() - 0.5) * 2 * Math.PI : 0,
+          target: activeLampType === LampType.SPOT_DIRECTIONAL ? [system.position[0], 0, system.position[2]] : undefined
         });
       }
 
@@ -437,19 +458,41 @@ const App: React.FC = () => {
           onCloneObject={cloneObject}
           onDeleteObject={deleteObject}
           onDeleteSystem={deleteSystem}
-          onSelectObject={(id) => setConfig(prev => ({ ...prev, selectedObjectId: id }))}
-          onSelectSystem={(id) => setConfig(prev => ({ ...prev, selectedSystemId: id }))}
+          onSelectObject={(id) => setConfig(prev => ({ ...prev, selectedObjectId: id, selectedLampId: null }))}
+          onSelectSystem={(id) => setConfig(prev => ({ ...prev, selectedSystemId: id, selectedLampId: null }))}
+          onSelectLamp={(id) => setConfig(prev => ({ ...prev, selectedLampId: id, selectedObjectId: null, selectedSystemId: null }))}
+          onUpdateLampTarget={handleUpdateLampTarget}
           deleteMode={deleteMode}
           isExportingImage={isExportingImage}
         />
       </div>
-      <div className="absolute top-4 left-4 w-32 md:w-48 z-10 pointer-events-none">
-        <img 
-          src={LOGO_URL} 
-          alt="EOS Logo" 
-          className="w-full h-auto drop-shadow-md" 
-          crossOrigin="anonymous"
-        />
+      <div className="absolute top-4 left-4 w-32 md:w-48 z-10 group">
+        <label className="cursor-pointer block relative">
+          <img 
+            src={config.logoUrl || LOGO_URL} 
+            alt="Logo" 
+            className="w-full h-auto drop-shadow-md transition-opacity group-hover:opacity-50" 
+            crossOrigin="anonymous"
+          />
+          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            <span className="bg-black/80 text-white text-[10px] font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+              Cambiar Logo
+            </span>
+          </div>
+          <input 
+            type="file" 
+            accept="image/png, image/jpeg" 
+            className="hidden" 
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                const url = URL.createObjectURL(file);
+                updateConfig('logoUrl', url);
+              }
+            }} 
+          />
+        </label>
       </div>
 
       {/* Top Right Info */}
@@ -471,7 +514,7 @@ const App: React.FC = () => {
         onDownloadPDF={handleDownloadPDF}
         onExport3D={handleExport3D}
         onProductDetail={setSelectedProduct}
-        logoUrl={LOGO_URL}
+        logoUrl={config.logoUrl || LOGO_URL}
         onUndo={handleUndo}
         canUndo={history.length > 0}
         onToggleEnv={toggleEnvironment}

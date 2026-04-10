@@ -134,6 +134,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const renderSettings = () => (
     <section className="space-y-4">
       <span className="uppercase font-bold text-gray-400 tracking-widest text-[7px] md:text-[10px]">Configuración Técnica</span>
+      
       <div className="space-y-3">
         <div className="flex flex-col gap-1.5">
           <div className="flex justify-between items-center">
@@ -277,6 +278,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       <div className="mt-6 space-y-3 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+        <div className="flex items-center justify-between mb-2">
+          <span className="uppercase font-bold text-gray-400 tracking-widest text-[7px] md:text-[10px]">Modo Iluminación</span>
+          <button 
+            onClick={() => updateConfig('lightsOn', !config.lightsOn)}
+            className={`w-10 h-5 rounded-full transition-colors relative ${config.lightsOn ? 'bg-yellow-400' : 'bg-gray-300'}`}
+          >
+            <div className={`absolute top-1 left-1 w-3 h-3 rounded-full bg-white transition-transform ${config.lightsOn ? 'translate-x-5' : 'translate-x-0'}`} />
+          </button>
+        </div>
         <span className="uppercase font-bold text-gray-400 tracking-widest text-[7px] md:text-[10px]">Colocación Express</span>
         <div className="flex items-center gap-3">
           <span className="text-[7px] md:text-[9px] uppercase font-bold text-gray-500 w-12">Cantidad</span>

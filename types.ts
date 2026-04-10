@@ -28,6 +28,7 @@ export interface PlacedLamp {
   trackIndex: number;
   position: number;
   rotation: number;
+  target?: [number, number, number]; // Target position for spot lights
 }
 
 export interface TrackSystemConfig {
@@ -63,6 +64,9 @@ export interface ConfigState {
   envObjects: EnvironmentObject[];
   projectName?: string;
   clientName?: string;
+  lightsOn: boolean;
+  selectedLampId: string | null;
+  logoUrl?: string;
 }
 
 export const PRICING = {

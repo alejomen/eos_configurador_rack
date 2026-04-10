@@ -1,19 +1,55 @@
 
-import React from 'react';
+import React, { useRef } from 'react';
+import * as THREE from 'three';
+import { useFrame } from '@react-three/fiber';
 import { LampType } from '../types';
 
 interface LampModelProps {
   type: LampType;
   isPreview?: boolean;
+  lightsOn?: boolean;
+  target?: [number, number, number];
+  isSelected?: boolean;
 }
 
-export const LampModel: React.FC<LampModelProps> = ({ type, isPreview }) => {
+export const LampModel: React.FC<LampModelProps> = ({ type, isPreview, lightsOn, target, isSelected }) => {
   const opacity = isPreview ? 0.4 : 1;
-  const color = isPreview ? "#4ade80" : "#111111"; // Green tint for placement preview
+  const color = isPreview ? "#4ade80" : isSelected ? "#22c55e" : "#111111"; // Green tint for placement preview or selection
+  const headRef = useRef<THREE.Group>(null);
+  const groupRef = useRef<THREE.Group>(null);
+
+  useFrame(() => {
+    if (headRef.current && groupRef.current && target) {
+      // Get the world position of the lamp
+      const worldPos = new THREE.Vector3();
+      groupRef.current.getWorldPosition(worldPos);
+      
+      // Create a dummy object at the lamp's world position
+      const dummy = new THREE.Object3D();
+      dummy.position.copy(worldPos);
+      
+      // Look at the target
+      dummy.lookAt(target[0], target[1], target[2]);
+      
+      // Apply the rotation to the head
+      // We need to convert the world rotation to local rotation
+      const parent = headRef.current.parent;
+      if (parent) {
+        dummy.updateMatrixWorld();
+        const localMatrix = new THREE.Matrix4().copy(parent.matrixWorld).invert().multiply(dummy.matrixWorld);
+        dummy.rotation.setFromRotationMatrix(localMatrix);
+      }
+      
+      headRef.current.rotation.copy(dummy.rotation);
+      
+      // Add an offset because the cylinder is oriented along Y by default
+      headRef.current.rotateX(-Math.PI / 2);
+    }
+  });
 
   if (type === LampType.SPOT_DIRECTIONAL) {
     return (
-      <group>
+      <group ref={groupRef}>
         {/* Magnetic Adapter */}
         <mesh position={[0, 0.01, 0]}>
           <boxGeometry args={[0.08, 0.02, 0.02]} />
@@ -25,17 +61,31 @@ export const LampModel: React.FC<LampModelProps> = ({ type, isPreview }) => {
           <meshStandardMaterial color={color} transparent opacity={opacity} />
         </mesh>
         {/* Head */}
-        <group position={[0, -0.1, 0]} rotation={[0.5, 0, 0]}>
+        <group ref={headRef} position={[0, -0.1, 0]} rotation={[0.5, 0, 0]}>
           <mesh position={[0, -0.05, 0]}>
             <cylinderGeometry args={[0.03, 0.03, 0.12]} />
             <meshStandardMaterial color={color} transparent opacity={opacity} />
           </mesh>
           {/* Lens */}
           {!isPreview && (
-            <mesh position={[0, -0.11, 0]} rotation={[-Math.PI/2, 0, 0]}>
-                <circleGeometry args={[0.025, 32]} />
-                <meshStandardMaterial color="#fff" emissive="#fff" emissiveIntensity={2} />
+            <mesh position={[0, -0.11, 0]}>
+                <cylinderGeometry args={[0.028, 0.028, 0.005, 32]} />
+                <meshStandardMaterial color={lightsOn ? "#fef08a" : "#e5e7eb"} emissive={lightsOn ? "#fef08a" : "#000000"} emissiveIntensity={lightsOn ? 5 : 0} />
             </mesh>
+          )}
+          {lightsOn && !isPreview && (
+            <spotLight 
+              position={[0, -0.11, 0]} 
+              angle={0.5} 
+              penumbra={1} 
+              intensity={100} 
+              castShadow={false} 
+              distance={15}
+              decay={1.5}
+              color="#fef08a"
+            >
+              <object3D position={[0, -1, 0]} attach="target" />
+            </spotLight>
           )}
         </group>
       </group>
@@ -44,12 +94,29 @@ export const LampModel: React.FC<LampModelProps> = ({ type, isPreview }) => {
 
   // FIXED RACK (8 lights)
   return (
-    <group>
+    <group ref={groupRef}>
       {/* Main Body */}
       <mesh position={[0, -0.015, 0]}>
         <boxGeometry args={[0.4, 0.03, 0.03]} />
         <meshStandardMaterial color={color} transparent opacity={opacity} />
       </mesh>
+      
+      {/* 1 SpotLight for the whole rack instead of 8 to save performance */}
+      {lightsOn && !isPreview && (
+        <spotLight 
+          position={[0, -0.05, 0]} 
+          angle={0.8} 
+          penumbra={1} 
+          intensity={150} 
+          castShadow={false}
+          distance={15}
+          decay={1.5}
+          color="#fef08a"
+        >
+          <object3D position={[0, -1, 0]} attach="target" />
+        </spotLight>
+      )}
+
       {/* 8 Spots */}
       {Array.from({ length: 8 }).map((_, i) => (
         <group key={i} position={[(i - 3.5) * 0.045, -0.035, 0]}>
@@ -60,7 +127,7 @@ export const LampModel: React.FC<LampModelProps> = ({ type, isPreview }) => {
           {!isPreview && (
             <mesh position={[0, -0.006, 0]}>
               <boxGeometry args={[0.02, 0.005, 0.02]} />
-              <meshStandardMaterial color="#fff" emissive="#fff" emissiveIntensity={1} />
+              <meshStandardMaterial color={lightsOn ? "#fef08a" : "#e5e7eb"} emissive={lightsOn ? "#fef08a" : "#000000"} emissiveIntensity={lightsOn ? 3 : 0} />
             </mesh>
           )}
         </group>

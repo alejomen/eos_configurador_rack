@@ -22,20 +22,36 @@ interface Scene3DProps {
   onDeleteSystem: (id: string) => void;
   onSelectObject: (id: string | null) => void;
   onSelectSystem: (id: string | null) => void;
+  onSelectLamp: (id: string | null) => void;
+  onUpdateLampTarget: (systemId: string, lampId: string, target: [number, number, number]) => void;
   deleteMode: boolean;
   isExportingImage: boolean;
 }
 
 export const Scene3D: React.FC<Scene3DProps> = ({ 
   config, activeLampType, onPlaceLamp, onRemoveLamp, onUpdateLampPos, canvasRef, sceneGroupRef,
-  onUpdateSystemPos, onUpdateObjectPos, onCloneObject, onDeleteObject, onDeleteSystem, onSelectObject, onSelectSystem, deleteMode, isExportingImage
+  onUpdateSystemPos, onUpdateObjectPos, onCloneObject, onDeleteObject, onDeleteSystem, onSelectObject, onSelectSystem, onSelectLamp, onUpdateLampTarget, deleteMode, isExportingImage
 }) => {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [draggingLampId, setDraggingLampId] = useState<string | null>(null);
-  const [dragType, setDragType] = useState<'system' | 'object' | null>(null);
+  const [dragType, setDragType] = useState<'system' | 'object' | 'target' | null>(null);
   const [dragData, setDragData] = useState<{ planeY: number, startPoint: THREE.Vector3, startObjPos: [number, number, number] } | null>(null);
 
-  const onPointerDown = (e: ThreeEvent<PointerEvent>, id: string, type: 'system' | 'object') => {
+  // Find selected lamp
+  let selectedLampSystemId: string | null = null;
+  let selectedLamp = null;
+  if (config.selectedLampId) {
+    for (const sys of config.systems) {
+      const lamp = sys.lamps.find(l => l.id === config.selectedLampId);
+      if (lamp) {
+        selectedLamp = lamp;
+        selectedLampSystemId = sys.id;
+        break;
+      }
+    }
+  }
+
+  const onPointerDown = (e: ThreeEvent<PointerEvent>, id: string, type: 'system' | 'object' | 'target') => {
     e.stopPropagation();
     if (deleteMode) {
       if (type === 'object') onDeleteObject(id);
@@ -48,12 +64,27 @@ export const Scene3D: React.FC<Scene3DProps> = ({
       return;
     }
 
+    if (type === 'target') {
+      if (selectedLamp && selectedLamp.target) {
+        setDragData({
+          planeY: e.point.y,
+          startPoint: e.point.clone(),
+          startObjPos: selectedLamp.target
+        });
+        setDraggingId(id);
+        setDragType(type);
+      }
+      return;
+    }
+
     if (type === 'object') {
       onSelectObject(id);
       onSelectSystem(null);
+      onSelectLamp(null);
     } else {
       onSelectObject(null);
       onSelectSystem(id);
+      onSelectLamp(null);
     }
 
     // Obtener la posición actual del objeto
@@ -93,10 +124,11 @@ export const Scene3D: React.FC<Scene3DProps> = ({
       onPointerMissed={() => {
         onSelectObject(null);
         onSelectSystem(null);
+        onSelectLamp(null);
       }}
     >
       <PerspectiveCamera makeDefault position={[8, 5, 8]} fov={35} />
-      <color attach="background" args={['#ffffff']} />
+      <color attach="background" args={[config.lightsOn ? '#111111' : '#ffffff']} />
       <OrbitControls 
         target={[0, 1.5, 0]}
         minPolarAngle={0} 
@@ -106,12 +138,18 @@ export const Scene3D: React.FC<Scene3DProps> = ({
         makeDefault
       />
       
-      <ambientLight intensity={0.7} />
-      <spotLight position={[10, 20, 10]} angle={0.25} penumbra={1} intensity={2.5} castShadow />
+      <ambientLight intensity={config.lightsOn ? 0.05 : 0.7} />
+      <spotLight position={[10, 20, 10]} angle={0.25} penumbra={1} intensity={config.lightsOn ? 0 : 2.5} castShadow={!config.lightsOn} />
       
       <Suspense fallback={null}>
-        <Environment preset="apartment" />
+        {config.lightsOn ? null : <Environment preset="apartment" />}
         
+        {/* PISO: Recibe sombras */}
+        <mesh position={[0, -0.01, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+          <planeGeometry args={[100, 100]} />
+          <meshStandardMaterial color={config.lightsOn ? "#222222" : "#ffffff"} roughness={0.8} />
+        </mesh>
+
         {/* TECHO: Invisible desde arriba usando THREE.FrontSide y rotación estratégica */}
         <mesh visible={!isExportingImage} position={[0, config.ceilingHeight, 0]} rotation={[Math.PI / 2, 0, 0]} receiveShadow>
           <planeGeometry args={[100, 100]} />
@@ -141,8 +179,10 @@ export const Scene3D: React.FC<Scene3DProps> = ({
               
               if (dragType === 'system') {
                 onUpdateSystemPos(draggingId, movePos);
-              } else {
+              } else if (dragType === 'object') {
                 onUpdateObjectPos(draggingId, movePos);
+              } else if (dragType === 'target' && selectedLampSystemId) {
+                onUpdateLampTarget(selectedLampSystemId, draggingId, movePos);
               }
             }}
             onPointerUp={(e) => {
@@ -152,6 +192,22 @@ export const Scene3D: React.FC<Scene3DProps> = ({
           >
             <planeGeometry args={[1000, 1000]} />
             <meshBasicMaterial transparent opacity={0} depthWrite={false} side={THREE.DoubleSide} />
+          </mesh>
+        )}
+
+        {/* Target for selected lamp */}
+        {selectedLamp && selectedLamp.type === LampType.SPOT_DIRECTIONAL && (
+          <mesh
+            position={selectedLamp.target || [0, 0, 0]}
+            rotation={[-Math.PI / 2, 0, 0]}
+            onPointerDown={(e) => onPointerDown(e as any, selectedLamp!.id, 'target')}
+          >
+            <ringGeometry args={[0.2, 0.25, 32]} />
+            <meshBasicMaterial color="#3b82f6" side={THREE.DoubleSide} transparent opacity={0.8} />
+            <mesh position={[0, 0, 0]}>
+              <circleGeometry args={[0.05, 16]} />
+              <meshBasicMaterial color="#3b82f6" />
+            </mesh>
           </mesh>
         )}
 
@@ -201,6 +257,8 @@ export const Scene3D: React.FC<Scene3DProps> = ({
                 setGlobalDraggingLamp={setDraggingLampId}
                 selectedObjectId={config.selectedObjectId}
                 onSelectObject={onSelectObject}
+                onSelectLamp={onSelectLamp}
+                onUpdateLampTarget={onUpdateLampTarget}
                 deleteMode={deleteMode}
               />
             </group>
