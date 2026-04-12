@@ -13,6 +13,56 @@ interface LampModelProps {
   isSelected?: boolean;
 }
 
+const RackSpot: React.FC<{ position: [number, number, number], color: string, opacity: number, isPreview?: boolean, lightsOn?: boolean, lightIntensity: number }> = ({ position, color, opacity, isPreview, lightsOn, lightIntensity }) => {
+  const lightRef = useRef<THREE.SpotLight>(null);
+  
+  useFrame(() => {
+    if (lightRef.current && lightRef.current.target) {
+      // For the rack, we want the light to always point straight down relative to the light's position.
+      // Since the target is attached but not in the scene graph, we update its local position 
+      // and then force a world matrix update.
+      lightRef.current.target.position.set(0, -1, 0);
+      
+      // We need to apply the parent's world matrix to the target so it points down in world space
+      // relative to the rack's orientation.
+      if (lightRef.current.parent) {
+        lightRef.current.target.matrixWorld.copy(lightRef.current.parent.matrixWorld);
+        lightRef.current.target.matrixWorld.multiply(new THREE.Matrix4().makeTranslation(0, -1, 0));
+      }
+    }
+  });
+
+  return (
+    <group position={position}>
+      <mesh>
+        <boxGeometry args={[0.035, 0.01, 0.03]} />
+        <meshStandardMaterial color={color} transparent opacity={opacity} />
+      </mesh>
+      {!isPreview && (
+        <mesh position={[0, -0.006, 0]}>
+          <boxGeometry args={[0.02, 0.005, 0.02]} />
+          <meshStandardMaterial color={lightsOn ? "#fef08a" : "#e5e7eb"} emissive={lightsOn ? "#fef08a" : "#000000"} emissiveIntensity={lightsOn ? lightIntensity / 30 : 0} />
+        </mesh>
+      )}
+      {lightsOn && !isPreview && (
+        <spotLight 
+          ref={lightRef}
+          position={[0, -0.01, 0]} 
+          angle={0.6} 
+          penumbra={0.8} 
+          intensity={lightIntensity * 0.15} 
+          castShadow={false} 
+          distance={8}
+          decay={2}
+          color="#fef08a"
+        >
+          <object3D attach="target" />
+        </spotLight>
+      )}
+    </group>
+  );
+};
+
 export const LampModel: React.FC<LampModelProps> = ({ type, isPreview, lightsOn, lightIntensity = 100, target, isSelected }) => {
   const opacity = isPreview ? 0.4 : 1;
   const color = isPreview ? "#4ade80" : isSelected ? "#22c55e" : "#111111"; // Green tint for placement preview or selection
@@ -110,32 +160,15 @@ export const LampModel: React.FC<LampModelProps> = ({ type, isPreview, lightsOn,
 
       {/* 8 Spots */}
       {Array.from({ length: 8 }).map((_, i) => (
-        <group key={i} position={[(i - 3.5) * 0.045, -0.035, 0]}>
-          <mesh>
-            <boxGeometry args={[0.035, 0.01, 0.03]} />
-            <meshStandardMaterial color={color} transparent opacity={opacity} />
-          </mesh>
-          {!isPreview && (
-            <mesh position={[0, -0.006, 0]}>
-              <boxGeometry args={[0.02, 0.005, 0.02]} />
-              <meshStandardMaterial color={lightsOn ? "#fef08a" : "#e5e7eb"} emissive={lightsOn ? "#fef08a" : "#000000"} emissiveIntensity={lightsOn ? lightIntensity / 30 : 0} />
-            </mesh>
-          )}
-          {lightsOn && !isPreview && (
-            <spotLight 
-              position={[0, -0.01, 0]} 
-              angle={0.6} 
-              penumbra={0.8} 
-              intensity={lightIntensity * 0.15} 
-              castShadow={false} 
-              distance={8}
-              decay={2}
-              color="#fef08a"
-            >
-              <object3D position={[0, -1, 0]} attach="target" />
-            </spotLight>
-          )}
-        </group>
+        <RackSpot 
+          key={i} 
+          position={[(i - 3.5) * 0.045, -0.035, 0]} 
+          color={color} 
+          opacity={opacity} 
+          isPreview={isPreview} 
+          lightsOn={lightsOn} 
+          lightIntensity={lightIntensity} 
+        />
       ))}
     </group>
   );
