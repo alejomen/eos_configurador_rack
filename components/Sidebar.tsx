@@ -287,6 +287,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className={`absolute top-1 left-1 w-3 h-3 rounded-full bg-white transition-transform ${config.lightsOn ? 'translate-x-5' : 'translate-x-0'}`} />
           </button>
         </div>
+        
+        {config.lightsOn && (
+          <div className="flex items-center gap-3 mb-4">
+            <span className="text-[7px] md:text-[9px] uppercase font-bold text-yellow-500 w-12">Potencia</span>
+            <input 
+              type="range" min="10" max="300" step="10" 
+              value={config.lightIntensity || 100} 
+              onChange={e => updateConfig('lightIntensity', parseInt(e.target.value))} 
+              className="flex-1 accent-yellow-400 h-1.5" 
+            />
+            <span className="w-8 text-right font-bold text-[8px] md:text-[10px] text-yellow-600">{config.lightIntensity || 100}%</span>
+          </div>
+        )}
+
         <span className="uppercase font-bold text-gray-400 tracking-widest text-[7px] md:text-[10px]">Colocación Express</span>
         <div className="flex items-center gap-3">
           <span className="text-[7px] md:text-[9px] uppercase font-bold text-gray-500 w-12">Cantidad</span>

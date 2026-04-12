@@ -47,6 +47,7 @@ const App: React.FC = () => {
     projectName: '',
     clientName: '',
     lightsOn: false,
+    lightIntensity: 100,
     selectedLampId: null
   });
 

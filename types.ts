@@ -65,6 +65,7 @@ export interface ConfigState {
   projectName?: string;
   clientName?: string;
   lightsOn: boolean;
+  lightIntensity: number;
   selectedLampId: string | null;
   logoUrl?: string;
 }

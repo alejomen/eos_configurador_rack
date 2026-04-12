@@ -151,6 +151,7 @@ export const TrackSystem: React.FC<TrackSystemProps> = ({
                 <LampModel 
                   type={lamp.type} 
                   lightsOn={config.lightsOn} 
+                  lightIntensity={config.lightIntensity || 100}
                   target={lamp.target} 
                   isSelected={isLampSelected}
                 />

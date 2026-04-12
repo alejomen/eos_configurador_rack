@@ -138,23 +138,23 @@ export const Scene3D: React.FC<Scene3DProps> = ({
         makeDefault
       />
       
-      <ambientLight intensity={config.lightsOn ? 0.05 : 0.7} />
-      <spotLight position={[10, 20, 10]} angle={0.25} penumbra={1} intensity={config.lightsOn ? 0 : 2.5} castShadow={!config.lightsOn} />
+      <ambientLight intensity={config.lightsOn ? 0.1 : 0.7} />
+      <spotLight position={[10, 20, 10]} angle={0.25} penumbra={1} intensity={config.lightsOn ? 0.05 : 2.5} castShadow={!config.lightsOn} />
       
       <Suspense fallback={null}>
-        {config.lightsOn ? null : <Environment preset="apartment" />}
+        {config.lightsOn ? <Environment preset="city" environmentIntensity={0.05} /> : <Environment preset="apartment" />}
         
         {/* PISO: Recibe sombras */}
         <mesh position={[0, -0.01, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
           <planeGeometry args={[100, 100]} />
-          <meshStandardMaterial color={config.lightsOn ? "#222222" : "#ffffff"} roughness={0.8} />
+          <meshStandardMaterial color="#ffffff" roughness={0.8} />
         </mesh>
 
         {/* TECHO: Invisible desde arriba usando THREE.FrontSide y rotación estratégica */}
         <mesh visible={!isExportingImage} position={[0, config.ceilingHeight, 0]} rotation={[Math.PI / 2, 0, 0]} receiveShadow>
           <planeGeometry args={[100, 100]} />
           <meshStandardMaterial 
-            color="#ffffff" 
+            color="#e5e5e5" 
             side={THREE.FrontSide} 
             roughness={1} 
             transparent={false}

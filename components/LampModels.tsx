@@ -8,15 +8,17 @@ interface LampModelProps {
   type: LampType;
   isPreview?: boolean;
   lightsOn?: boolean;
+  lightIntensity?: number;
   target?: [number, number, number];
   isSelected?: boolean;
 }
 
-export const LampModel: React.FC<LampModelProps> = ({ type, isPreview, lightsOn, target, isSelected }) => {
+export const LampModel: React.FC<LampModelProps> = ({ type, isPreview, lightsOn, lightIntensity = 100, target, isSelected }) => {
   const opacity = isPreview ? 0.4 : 1;
   const color = isPreview ? "#4ade80" : isSelected ? "#22c55e" : "#111111"; // Green tint for placement preview or selection
   const headRef = useRef<THREE.Group>(null);
   const groupRef = useRef<THREE.Group>(null);
+  const lightRef = useRef<THREE.SpotLight>(null);
 
   useFrame(() => {
     if (headRef.current && groupRef.current && target) {
@@ -45,6 +47,10 @@ export const LampModel: React.FC<LampModelProps> = ({ type, isPreview, lightsOn,
       // Add an offset because the cylinder is oriented along Y by default
       headRef.current.rotateX(-Math.PI / 2);
     }
+
+    if (lightRef.current && lightRef.current.target) {
+      lightRef.current.target.updateMatrixWorld();
+    }
   });
 
   if (type === LampType.SPOT_DIRECTIONAL) {
@@ -70,21 +76,22 @@ export const LampModel: React.FC<LampModelProps> = ({ type, isPreview, lightsOn,
           {!isPreview && (
             <mesh position={[0, -0.11, 0]}>
                 <cylinderGeometry args={[0.028, 0.028, 0.005, 32]} />
-                <meshStandardMaterial color={lightsOn ? "#fef08a" : "#e5e7eb"} emissive={lightsOn ? "#fef08a" : "#000000"} emissiveIntensity={lightsOn ? 5 : 0} />
+                <meshStandardMaterial color={lightsOn ? "#fef08a" : "#e5e7eb"} emissive={lightsOn ? "#fef08a" : "#000000"} emissiveIntensity={lightsOn ? lightIntensity / 20 : 0} />
             </mesh>
           )}
           {lightsOn && !isPreview && (
             <spotLight 
+              ref={lightRef}
               position={[0, -0.11, 0]} 
-              angle={0.5} 
-              penumbra={1} 
-              intensity={100} 
+              angle={0.55} 
+              penumbra={0.8} 
+              intensity={lightIntensity * 0.4} 
               castShadow={false} 
-              distance={15}
-              decay={1.5}
+              distance={12}
+              decay={2}
               color="#fef08a"
             >
-              <object3D position={[0, -1, 0]} attach="target" />
+              <object3D position={target || [0, -1, 0]} attach="target" />
             </spotLight>
           )}
         </group>
@@ -100,22 +107,6 @@ export const LampModel: React.FC<LampModelProps> = ({ type, isPreview, lightsOn,
         <boxGeometry args={[0.4, 0.03, 0.03]} />
         <meshStandardMaterial color={color} transparent opacity={opacity} />
       </mesh>
-      
-      {/* 1 SpotLight for the whole rack instead of 8 to save performance */}
-      {lightsOn && !isPreview && (
-        <spotLight 
-          position={[0, -0.05, 0]} 
-          angle={0.8} 
-          penumbra={1} 
-          intensity={150} 
-          castShadow={false}
-          distance={15}
-          decay={1.5}
-          color="#fef08a"
-        >
-          <object3D position={[0, -1, 0]} attach="target" />
-        </spotLight>
-      )}
 
       {/* 8 Spots */}
       {Array.from({ length: 8 }).map((_, i) => (
@@ -127,8 +118,22 @@ export const LampModel: React.FC<LampModelProps> = ({ type, isPreview, lightsOn,
           {!isPreview && (
             <mesh position={[0, -0.006, 0]}>
               <boxGeometry args={[0.02, 0.005, 0.02]} />
-              <meshStandardMaterial color={lightsOn ? "#fef08a" : "#e5e7eb"} emissive={lightsOn ? "#fef08a" : "#000000"} emissiveIntensity={lightsOn ? 3 : 0} />
+              <meshStandardMaterial color={lightsOn ? "#fef08a" : "#e5e7eb"} emissive={lightsOn ? "#fef08a" : "#000000"} emissiveIntensity={lightsOn ? lightIntensity / 30 : 0} />
             </mesh>
+          )}
+          {lightsOn && !isPreview && (
+            <spotLight 
+              position={[0, -0.01, 0]} 
+              angle={0.6} 
+              penumbra={0.8} 
+              intensity={lightIntensity * 0.15} 
+              castShadow={false} 
+              distance={8}
+              decay={2}
+              color="#fef08a"
+            >
+              <object3D position={[0, -1, 0]} attach="target" />
+            </spotLight>
           )}
         </group>
       ))}
