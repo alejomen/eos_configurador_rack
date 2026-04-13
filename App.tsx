@@ -1,5 +1,7 @@
 
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { Joyride, Step } from 'react-joyride';
+import { Info } from 'lucide-react';
 import { Scene3D } from './components/Scene3D';
 import { Sidebar } from './components/Sidebar';
 import { ProductModal } from './components/ProductModal';
@@ -56,6 +58,7 @@ const App: React.FC = () => {
   const [isExportingImage, setIsExportingImage] = useState(false);
   const [activeLampType, setActiveLampType] = useState<LampType | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<LampType | null>(null);
+  const [runTour, setRunTour] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sceneGroupRef = useRef<THREE.Group>(null);
 
@@ -443,8 +446,66 @@ const App: React.FC = () => {
     });
   }, [activeLampType, config, saveHistory]);
 
+  const tourSteps: Step[] = [
+    {
+      target: 'body',
+      placement: 'center',
+      content: 'Bienvenido a la aplicación de configuración 3D. Aquí puedes diseñar y visualizar sistemas de iluminación.',
+      title: 'Tour de la Aplicación',
+      disableBeacon: true,
+    },
+    {
+      target: '.tour-toolbar',
+      content: 'Esta es la barra de herramientas principal. Aquí puedes acceder a la configuración, añadir luminarias, deshacer cambios y exportar.',
+      placement: 'top',
+    },
+    {
+      target: '.tour-tab-settings',
+      content: 'Ajusta las medidas de tu espacio, la altura del techo y la altura de suspensión del sistema de rieles.',
+      placement: 'top',
+    },
+    {
+      target: '.tour-tab-lamps',
+      content: 'Selecciona el tipo de luminaria que deseas añadir. Haz clic para seleccionarla y luego haz clic en el riel para colocarla.',
+      placement: 'top',
+    },
+    {
+      target: '.tour-export',
+      content: 'Revisa el costo total y exporta tu diseño con una cotización detallada en PDF.',
+      placement: 'left',
+    }
+  ];
+
+  const handleJoyrideCallback = (data: any) => {
+    const { status } = data;
+    if (['finished', 'skipped'].includes(status)) {
+      setRunTour(false);
+    }
+  };
+
   return (
     <div className="h-screen w-full bg-white text-gray-900 overflow-hidden relative">
+      <Joyride
+        steps={tourSteps}
+        run={runTour}
+        continuous
+        showSkipButton
+        showProgress
+        callback={handleJoyrideCallback}
+        styles={{
+          options: {
+            primaryColor: '#000',
+            zIndex: 10000,
+          }
+        }}
+        locale={{
+          back: 'Atrás',
+          close: 'Cerrar',
+          last: 'Finalizar',
+          next: 'Siguiente',
+          skip: 'Saltar'
+        }}
+      />
       <div className="absolute inset-0 cursor-crosshair">
         <Scene3D 
           config={config} 
@@ -500,8 +561,12 @@ const App: React.FC = () => {
       <div className="absolute top-4 right-4 z-10 flex items-center gap-3 bg-white/90 backdrop-blur-md px-4 py-2 rounded-full shadow-lg border border-gray-100">
         <span className="font-bold text-sm">${quoteData.total.toLocaleString()}</span>
         <div className="w-px h-4 bg-gray-300"></div>
-        <button onClick={handleDownloadPDF} className="text-black hover:text-gray-600 transition-colors">
+        <button onClick={handleDownloadPDF} className="tour-export text-black hover:text-gray-600 transition-colors" title="Exportar PDF">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+        </button>
+        <div className="w-px h-4 bg-gray-300"></div>
+        <button onClick={() => setRunTour(true)} className="text-black hover:text-blue-600 transition-colors" title="Tour de la App">
+          <Info className="w-5 h-5" />
         </button>
       </div>
 

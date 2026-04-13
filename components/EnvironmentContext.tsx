@@ -7,7 +7,7 @@ import { ConfigState, EnvironmentObject } from '../types';
 const getMaterialProps = (isSelected: boolean, isDeleteMode: boolean, lightsOn: boolean) => {
   if (isDeleteMode) return { color: '#ef4444', emissive: '#ef4444', emissiveIntensity: 0.2, roughness: 0.8 };
   if (isSelected) return { color: '#4ade80', emissive: '#22c55e', emissiveIntensity: 0.3, roughness: 0.8 };
-  return { color: lightsOn ? '#222222' : '#ffffff', roughness: 0.8 };
+  return { color: '#ffffff', roughness: 0.5 };
 };
 
 interface EnvObjProps {

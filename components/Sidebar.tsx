@@ -422,48 +422,54 @@ export const Sidebar: React.FC<SidebarProps> = ({
         )}
 
         {/* Floating Toolbar */}
-        <div className={toolbarClasses}>
+        <div className={`tour-toolbar ${toolbarClasses}`}>
           <button 
             className="p-3 cursor-grab active:cursor-grabbing text-gray-400 hover:text-black hidden md:flex items-center justify-center shrink-0"
             onPointerDown={(e) => {
               e.preventDefault();
               setIsDragging(true);
             }}
+            title="Mover Barra"
           >
             {isHorizontal ? <GripVertical size={20} /> : <GripHorizontal size={20} />}
           </button>
 
           <button 
             onClick={() => setActiveTab(activeTab === 'settings' ? null : 'settings')}
-            className={`p-3 rounded-full shrink-0 transition-all ${activeTab === 'settings' ? 'bg-black text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            className={`tour-tab-settings p-3 rounded-full shrink-0 transition-all ${activeTab === 'settings' ? 'bg-black text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            title="Ajustes del Espacio"
           >
             <Settings size={20} />
           </button>
           
           <button 
             onClick={() => setActiveTab(activeTab === 'environment' ? null : 'environment')}
-            className={`p-3 rounded-full shrink-0 transition-all ${activeTab === 'environment' ? 'bg-black text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            className={`tour-tab-environment p-3 rounded-full shrink-0 transition-all ${activeTab === 'environment' ? 'bg-black text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            title="Entorno y Muebles"
           >
             <Box size={20} />
           </button>
 
           <button 
             onClick={() => setActiveTab(activeTab === 'tracks' ? null : 'tracks')}
-            className={`p-3 rounded-full shrink-0 transition-all ${activeTab === 'tracks' ? 'bg-black text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            className={`tour-tab-tracks p-3 rounded-full shrink-0 transition-all ${activeTab === 'tracks' ? 'bg-black text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            title="Sistema de Rieles"
           >
             <GitCommit size={20} />
           </button>
 
           <button 
             onClick={() => setActiveTab(activeTab === 'lamps' ? null : 'lamps')}
-            className={`p-3 rounded-full shrink-0 transition-all ${activeTab === 'lamps' ? 'bg-black text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            className={`tour-tab-lamps p-3 rounded-full shrink-0 transition-all ${activeTab === 'lamps' ? 'bg-black text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            title="Luminarias"
           >
             <Lightbulb size={20} />
           </button>
 
           <button 
             onClick={() => setActiveTab(activeTab === 'quote' ? null : 'quote')}
-            className={`p-3 rounded-full shrink-0 transition-all ${activeTab === 'quote' ? 'bg-black text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            className={`tour-tab-quote p-3 rounded-full shrink-0 transition-all ${activeTab === 'quote' ? 'bg-black text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            title="Cotización"
           >
             <FileText size={20} />
           </button>
@@ -473,6 +479,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <button 
             onClick={() => setDeleteMode(!deleteMode)}
             className={`p-3 rounded-full shrink-0 transition-all ${deleteMode ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            title="Borrar Elemento"
           >
             <Trash2 size={20} />
           </button>
@@ -481,6 +488,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             onClick={onUndo}
             disabled={!canUndo}
             className={`p-3 rounded-full shrink-0 transition-all ${canUndo ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' : 'bg-gray-50 text-gray-300'}`}
+            title="Deshacer"
           >
             <Undo size={20} />
           </button>

@@ -147,7 +147,7 @@ export const Scene3D: React.FC<Scene3DProps> = ({
         {/* PISO: Recibe sombras */}
         <mesh position={[0, -0.01, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
           <planeGeometry args={[100, 100]} />
-          <meshStandardMaterial color="#ffffff" roughness={0.8} />
+          <meshStandardMaterial color="#f3f4f6" roughness={0.9} />
         </mesh>
 
         {/* TECHO: Invisible desde arriba usando THREE.FrontSide y rotación estratégica */}

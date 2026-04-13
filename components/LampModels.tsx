@@ -50,7 +50,7 @@ const RackSpot: React.FC<{ position: [number, number, number], color: string, op
           position={[0, -0.01, 0]} 
           angle={0.6} 
           penumbra={0.8} 
-          intensity={lightIntensity * 0.15} 
+          intensity={lightIntensity * 0.05} 
           castShadow={false} 
           distance={8}
           decay={2}
@@ -135,7 +135,7 @@ export const LampModel: React.FC<LampModelProps> = ({ type, isPreview, lightsOn,
               position={[0, -0.11, 0]} 
               angle={0.55} 
               penumbra={0.8} 
-              intensity={lightIntensity * 0.4} 
+              intensity={lightIntensity * 0.13} 
               castShadow={false} 
               distance={12}
               decay={2}

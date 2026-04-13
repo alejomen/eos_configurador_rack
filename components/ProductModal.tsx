@@ -1,6 +1,9 @@
 
-import React from 'react';
+import React, { Suspense } from 'react';
+import { Canvas } from '@react-three/fiber';
+import { OrbitControls, Environment, ContactShadows } from '@react-three/drei';
 import { LampType, PRODUCT_DETAILS } from '../types';
+import { LampModel } from './LampModels';
 
 interface ProductModalProps {
   productType: LampType | null;
@@ -15,12 +18,19 @@ export const ProductModal: React.FC<ProductModalProps> = ({ productType, onClose
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div className="bg-white w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
-        <div className="relative h-64 bg-gray-100">
-          <img 
-            src={product.image} 
-            alt={product.name} 
-            className="w-full h-full object-cover"
-          />
+        <div className="relative h-64 bg-gray-100 cursor-move">
+          <Canvas camera={{ position: [0, 0.2, 0.5], fov: 45 }}>
+            <Suspense fallback={null}>
+              <Environment preset="city" />
+              <ambientLight intensity={0.5} />
+              <spotLight position={[1, 2, 1]} intensity={1} />
+              <group position={[0, 0, 0]} scale={1.5}>
+                <LampModel type={productType} isPreview={false} lightsOn={true} lightIntensity={50} />
+              </group>
+              <ContactShadows position={[0, -0.1, 0]} opacity={0.4} scale={1} blur={2} far={1} />
+              <OrbitControls enableZoom={false} autoRotate autoRotateSpeed={2} />
+            </Suspense>
+          </Canvas>
           <button 
             onClick={onClose}
             className="absolute top-4 right-4 w-8 h-8 bg-white/80 backdrop-blur rounded-full flex items-center justify-center text-black shadow-sm hover:bg-white"
